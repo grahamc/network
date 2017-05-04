@@ -31,6 +31,7 @@ in {
     };
 
     users = {
+      mutableUsers = false;
       users = {
         root.openssh.authorizedKeys.keyFiles = [
           secrets.root.keys
