@@ -4,21 +4,6 @@ let
   cfg = config.services.standard;
   secrets = import ../../secrets.nix;
 in {
-  options = {
-    services.standard = {
-      s3_bucket = mkOption {
-        type = types.string;
-        default = "prsnixgscio";
-      };
-
-      public_key_file = mkOption {
-        type = types.path;
-        default = secrets.cache_public_key_file;
-      };
-
-    };
-  };
-
   config = {
     services.openssh = {
       enable = true;
