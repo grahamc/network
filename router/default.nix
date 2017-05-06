@@ -171,6 +171,11 @@ in
     enable = true;
     interfaces = internalInterfaces;
     nssmdns = true;
+
+    publish = {
+      enable = true;
+      userServices = true;
+    };
   };
   users = {
     extraUsers = {
