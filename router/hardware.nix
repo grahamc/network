@@ -10,6 +10,12 @@
       fsType = "ext4";
     };
 
+  fileSystems."/home/emilyc/timemachine" =
+    { device = "rpool/time-machine/emily";
+      fsType = "zfs";
+      options = [ "nofail" ];
+    };
+
   swapDevices = [ ];
 
   nix.maxJobs = lib.mkDefault 6;
@@ -19,4 +25,8 @@
   boot.loader.grub.enable = true;
   boot.loader.grub.version = 2;
   boot.loader.grub.device = "/dev/sda"; # or "nodev" for efi only
+
+  boot.supportedFilesystems = [ "zfs" ];
+  networking.hostId = "a207025c";
+  services.zfs.autoScrub.enable = true;
 }

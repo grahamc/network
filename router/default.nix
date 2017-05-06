@@ -39,8 +39,45 @@ in
     emacs
   ];
 
-  # List services that you want to enable:
+  # Basically, we want to allow some ports only locally and refuse
+  # them externally.
+  #
+  # We don't make a distinction between udp and tcp, since hopefully
+  # we won't have that complex of a configuration.
+  networking.firewall.extraCommands = let
+    refusePortOnInterface = port: interface:
+      ''
+        ip46tables -A nixos-fw -i ${interface} -p tcp \
+          --dport ${toString port} -j nixos-fw-log-refuse
+        ip46tables -A nixos-fw -i ${interface} -p udp \
+          --dport ${toString port} -j nixos-fw-log-refuse
+      '';
+    acceptPortOnInterface = port: interface:
+      ''
+        ip46tables -A nixos-fw -i ${interface} -p tcp \
+          --dport ${toString port} -j nixos-fw-accept
+        ip46tables -A nixos-fw -i ${interface} -p udp \
+          --dport ${toString port} -j nixos-fw-accept
+      '';
 
+    privatelyAcceptPort = port:
+      lib.concatMapStrings
+        (interface: acceptPortOnInterface port interface)
+        internalInterfaces;
+
+    publiclyRejectPort = port:
+      refusePortOnInterface port externalInterface;
+
+    allowPortOnlyPrivately = port:
+      ''
+        ${privatelyAcceptPort port}
+        ${publiclyRejectPort port}
+      '';
+  in lib.concatMapStrings allowPortOnlyPrivately
+    [
+      config.services.netatalk.port
+      5353 # avahi
+    ];
 
   networking.interfaces."${wirelessInterface}" = {
     ip4 = [{
@@ -112,5 +149,38 @@ in
       }
 
     '';
+  };
+
+  services.netatalk = {
+    enable = true;
+    extraConfig = ''
+      afp interfaces =  ${lib.concatStringsSep " " internalInterfaces}
+      log level = default:info
+    '';
+
+    volumes = {
+      "emilys-time-machine" = {
+        "time machine" = "yes";
+        path = "/home/emilyc/timemachine/time-machine-root";
+        "valid users" = "emilyc";
+      };
+    };
+  };
+
+  services.avahi = {
+    enable = true;
+    interfaces = internalInterfaces;
+    nssmdns = true;
+  };
+  users = {
+    extraUsers = {
+      emilyc = {
+        isNormalUser = true;
+        uid = 1002;
+        createHome = true;
+        home = "/home/emilyc";
+        hashedPassword = secrets.emilyc.password;
+      };
+    };
   };
 }
