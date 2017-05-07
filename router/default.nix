@@ -21,7 +21,7 @@ in
     "net.ipv4.conf.default.forwarding" = 1;
   };
 
-  networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  networking.wireless.enable = false;  # Enables wireless support via wpa_supplicant.
 
   # Select internationalisation properties.
   i18n = {
