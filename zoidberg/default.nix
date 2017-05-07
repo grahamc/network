@@ -42,6 +42,7 @@ in { pkgs, ... }: {
 
   environment = {
     systemPackages = with pkgs; [
+      git # for kylechristensen
       ledger # for matthewturland.com
       weechat
       screen
@@ -194,6 +195,16 @@ in { pkgs, ... }: {
         home = "/home/mturland";
         openssh.authorizedKeys.keyFiles = [
           secrets.mturland.keys
+        ];
+      };
+
+      kylechristensen = {
+        isNormalUser = true;
+        uid = 1003;
+        createHome = true;
+        home = "/home/kylechristensen";
+        openssh.authorizedKeys.keyFiles = [
+          secrets.kylechristensen.keys
         ];
       };
     };
