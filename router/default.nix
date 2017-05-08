@@ -164,6 +164,12 @@ in
         path = "/home/emilyc/timemachine/time-machine-root";
         "valid users" = "emilyc";
       };
+
+      "grahams-time-machine" = {
+        "time machine" = "yes";
+        path = "/home/grahamc/timemachine/time-machine-root";
+        "valid users" = "grahamc";
+      };
     };
   };
 

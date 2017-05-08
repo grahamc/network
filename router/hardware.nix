@@ -15,6 +15,12 @@
       fsType = "zfs";
       options = [ "nofail" ];
     };
+  fileSystems."/home/grahamc/timemachine" =
+    { device = "rpool/time-machine/graham";
+      fsType = "zfs";
+      options = [ "nofail" ];
+    };
+
 
   swapDevices = [ ];
 
