@@ -201,6 +201,9 @@ in
       userServices = true;
     };
   };
+  services.fail2ban = {
+    enable = true;
+  };
   users = {
     extraUsers = {
       emilyc = {
