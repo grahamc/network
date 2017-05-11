@@ -45,6 +45,14 @@ in
   # We don't make a distinction between udp and tcp, since hopefully
   # we won't have that complex of a configuration.
   networking.firewall.extraCommands = let
+    dropPortNoLog = port:
+      ''
+        ip46tables -A nixos-fw -p tcp \
+          --dport ${toString port} -j nixos-fw-refuse
+        ip46tables -A nixos-fw -p udp \
+          --dport ${toString port} -j nixos-fw-refuse
+      '';
+
     refusePortOnInterface = port: interface:
       ''
         ip46tables -A nixos-fw -i ${interface} -p tcp \
@@ -73,11 +81,21 @@ in
         ${privatelyAcceptPort port}
         ${publiclyRejectPort port}
       '';
-  in lib.concatMapStrings allowPortOnlyPrivately
-    [
-      config.services.netatalk.port
-      5353 # avahi
-    ];
+  in lib.concatStrings [
+    (lib.concatMapStrings allowPortOnlyPrivately
+      [
+        config.services.netatalk.port
+        5353 # avahi
+      ])
+    (lib.concatMapStrings dropPortNoLog
+      [
+        23   # Common from public internet
+        143  # Common from public internet
+        139  # From RT AP
+        515  # From RT AP
+        9100 # From RT AP
+      ])
+  ];
 
   networking.interfaces."${wirelessInterface}" = {
     ip4 = [{
