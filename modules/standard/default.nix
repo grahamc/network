@@ -5,6 +5,7 @@ let
   secrets = import ../../secrets.nix;
 in {
   config = {
+    nixpkgs.config.allowUnfree = true;
     services.openssh = {
       enable = true;
       passwordAuthentication = false;
