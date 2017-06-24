@@ -32,6 +32,67 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
+
+    {
+      users.users.nix-channel-monitor = {
+        description = "Nix Channel Monitor";
+        home = "/var/lib/nix-channel-monitor";
+        createHome = true;
+        group = "nix-channel-monitor";
+        uid = 400;
+      };
+      users.groups.nix-channel-monitor.gid = 400;
+
+      systemd = {
+        services = {
+          nix-channel-monitor = {
+            after = [ "network.target" "network-online.target" ];
+            wants = [ "network-online.target" ];
+            path = with pkgs; [
+              telnet
+              git
+            ];
+
+            serviceConfig = {
+              User = "nix-channel-monitor";
+              Group = "nix-channel-monitor";
+              Type = "oneshot";
+              PrivateTmp = true;
+              WorkingDirectory = "/var/lib/nix-channel-monitor";
+            };
+
+            preStart = ''
+              set -eux
+              if [ ! -d /var/lib/nix-channel-monitor/git ]; then
+                git clone https://github.com/nixos/nixpkgs-channels.git git
+              fi
+
+              mkdir -p /var/lib/nix-channel-monitor/webroot
+            '';
+
+            script = ''
+              ${./nix-channel-monitor/changes.sh} /var/lib/nix-channel-monitor/git /var/lib/nix-channel-monitor/monitor/public
+            '';
+          };
+        };
+
+        timers = {
+          run-nix-channel-monitor = {
+            description = "Rerun the nix channel monitor";
+            wantedBy = [ "timers.target" ];
+            partOf = [ "nix-channel-monitor.service" ];
+            enable = true;
+            timerConfig = {
+              OnCalendar = "*:0/5";
+              Unit = "nix-channel-monitor.service";
+              Persistent = "yes";
+              AccuracySec = "1m";
+              RandomizedDelaySec = "30s";
+            };
+          };
+        };
+      };
+    }
   ];
 
   networking = {
@@ -65,6 +126,12 @@ in { pkgs, ... }: {
       package = pkgs.mysql55;
     };
 
+    hound = {
+      enable = true;
+      listen = "127.0.0.1:6080";
+      config = builtins.readFile ./hound/hound.json;
+    };
+
     nginx = {
       enable = true;
       recommendedGzipSettings = true;
@@ -77,9 +144,7 @@ in { pkgs, ... }: {
                      '"$http_referer" "$http_user_agent" "$gzip_ratio"';
       '';
 
-      virtualHosts = let
-        rootname = "next.gsc.io";
-      in {
+      virtualHosts = {
         "zoidberg.gsc.io" = defaultVhostCfg // {
           default = true;
         };
@@ -90,13 +155,40 @@ in { pkgs, ... }: {
           enableSSL = true;
         };
 
-        "${rootname}" = defaultVhostCfg // {
+        "search.nix.gsc.io" = defaultVhostCfg // {
           enableACME = true;
-          # forceSSL = true;
+          forceSSL = true;
+          locations = {
+            "/open_search.xml".alias = "${./hound/open-search.xml}";
+            "/".proxyPass = "http://127.0.0.1:6080/";
+          };
+        };
+
+        "channels.nix.gsc.io" = defaultVhostCfg // {
+          root = "/var/lib/nginx/nix-channel-monitor/monitor/public";
+          enableACME = true;
+          forceSSL = true;
+          locations."/".extraConfig = ''
+            autoindex on;
+          '';
+        };
+
+        "webhook.nix.gsc.io" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+          locations."/nixos".alias = pkgs.writeTextDir "nixpkgs" "OK";
+        };
+
+        "gsc.io" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
           root = "/var/lib/nginx/grahamc/gsc.io/public";
         };
-        "www.${rootname}" = defaultVhostCfg // {
-          globalRedirect = rootname;
+
+        "www.gsc.io" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+          globalRedirect = "gsc.io";
         };
 
         "u.gsc.io" = defaultVhostCfg // {
@@ -109,22 +201,6 @@ in { pkgs, ... }: {
           '';
 
           locations = (vhostPHPLocations pkgs ./url-shortener-root);
-        };
-
-        "matthewturland.com" = defaultVhostCfg // rec {
-          enableACME = true;
-          forceSSL = true;
-          root = "/var/lib/nginx/mturland/matthewturland.com/public";
-          locations = (vhostPHPLocations pkgs root) // {
-            "~* /(?:uploads|files)/.*\.php$".extraConfig =  ''
-              deny all;
-            '';
-          };
-        };
-        "www.matthewturland.com" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          globalRedirect = "matthewturland.com";
         };
       };
     };
@@ -172,6 +248,14 @@ in { pkgs, ... }: {
           if ! test -L /home/grahamc/gsc.io; then
             ln -s /var/lib/nginx/grahamc/gsc.io /home/grahamc/gsc.io
           fi
+
+          mkdir -p /var/lib/nginx/nix-channel-monitor/monitor/public
+          chown nginx:nginx /var/lib/nginx/grahamc/
+          chown nix-channel-monitor:nix-channel-monitor /var/lib/nginx/nix-channel-monitor/monitor
+          if ! test -L /var/lib/nix-channel-monitor/monitor; then
+            ln -s /var/lib/nginx/nix-channel-monitor/monitor /var/lib/nix-channel-monitor/monitor
+          fi
+          chown nix-channel-monitor:nix-channel-monitor /var/lib/nginx/nix-channel-monitor/monitor/public
 
           mkdir -p /var/lib/nginx/mturland/matthewturland.com/public
           chown nginx:nginx /var/lib/nginx/mturland/

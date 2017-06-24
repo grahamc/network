@@ -1,0 +1,78 @@
+{
+    "dbpath": "/var/lib/hound/data",
+    "max-concurrent-indexers": 1,
+    "repos": {
+        "NixOS-cabal2nix": {
+            "url": "https://github.com/NixOS/cabal2nix.git"
+        },
+        "NixOS-hydra": {
+            "url": "https://github.com/NixOS/hydra.git"
+        },
+        "NixOS-hydra-ant-logger": {
+            "url": "https://github.com/NixOS/hydra-ant-logger.git"
+        },
+        "NixOS-hydra-provisioner": {
+            "url": "https://github.com/NixOS/hydra-provisioner.git"
+        },
+        "NixOS-mvn2nix-maven-plugin": {
+            "url": "https://github.com/NixOS/mvn2nix-maven-plugin.git"
+        },
+        "NixOS-nix": {
+            "url": "https://github.com/NixOS/nix.git"
+        },
+        "NixOS-nix-eclipse": {
+            "url": "https://github.com/NixOS/nix-eclipse.git"
+        },
+        "NixOS-nix-idea": {
+            "url": "https://github.com/NixOS/nix-idea.git"
+        },
+        "NixOS-nixcon": {
+            "url": "https://github.com/NixOS/nixcon.git"
+        },
+        "NixOS-nixops": {
+            "url": "https://github.com/NixOS/nixops.git"
+        },
+        "NixOS-nixos-artwork": {
+            "url": "https://github.com/NixOS/nixos-artwork.git"
+        },
+        "NixOS-nixos-channel-scripts": {
+            "url": "https://github.com/NixOS/nixos-channel-scripts.git"
+        },
+        "NixOS-nixos-hardware": {
+            "url": "https://github.com/NixOS/nixos-hardware.git"
+        },
+        "NixOS-nixos-homepage": {
+            "url": "https://github.com/NixOS/nixos-homepage.git"
+        },
+        "NixOS-nixos-org-configurations": {
+            "url": "https://github.com/NixOS/nixos-org-configurations.git"
+        },
+        "NixOS-nixos-weekly": {
+            "url": "https://github.com/NixOS/nixos-weekly.git"
+        },
+        "NixOS-nixpart": {
+            "url": "https://github.com/NixOS/nixpart.git"
+        },
+        "NixOS-nixpkgs": {
+            "url": "https://github.com/NixOS/nixpkgs.git"
+        },
+        "NixOS-npm2nix": {
+            "url": "https://github.com/NixOS/npm2nix.git"
+        },
+        "NixOS-patchelf": {
+            "url": "https://github.com/NixOS/patchelf.git"
+        },
+        "NixOS-rfcs": {
+            "url": "https://github.com/NixOS/rfcs.git"
+        },
+        "NixOS-security": {
+            "url": "https://github.com/NixOS/security.git"
+        },
+        "nixos-users-wiki-wiki": {
+            "url": "https://github.com/nixos-users/wiki.wiki.git",
+            "url-pattern": {
+                "base-url": "{url}/{path}"
+            }
+        }
+    }
+}
