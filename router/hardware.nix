@@ -21,7 +21,6 @@
       options = [ "nofail" ];
     };
 
-
   swapDevices = [ ];
 
   nix.maxJobs = lib.mkDefault 6;

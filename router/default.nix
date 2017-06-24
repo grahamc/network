@@ -1,15 +1,14 @@
 { secrets }:
 { config, lib, pkgs, ... }:
 let
-        externalInterface = "enp9s0";
-        wirelessInterface = "wlp8s0";
+        externalInterface = "enp8s0";
         internalWiredInterfaces = [
 #         "enp3s0"
           "enp4s0"
 #         "enp6s0"
         ];
 
-        internalInterfaces = [wirelessInterface ] ++ internalWiredInterfaces;
+        internalInterfaces = [ ] ++ internalWiredInterfaces;
 in
 {
   imports = [
@@ -20,8 +19,6 @@ in
     "net.ipv4.conf.all.forwarding" = 1;
     "net.ipv4.conf.default.forwarding" = 1;
   };
-
-  networking.wireless.enable = false;  # Enables wireless support via wpa_supplicant.
 
   # Select internationalisation properties.
   i18n = {
@@ -86,6 +83,17 @@ in
       [
         config.services.netatalk.port
         5353 # avahi
+
+        # https://help.ubnt.com/hc/en-us/articles/204910084-UniFi-Change-Default-Ports-for-Controller-and-UAPs
+        # TCP:
+        6789  # Port for throughput tests
+        8080  # Port for UAP to inform controller.
+        8880  # Port for HTTP portal redirect, if guest portal is enabled.
+        8843  # Port for HTTPS portal redirect, ditto.
+        8443  # Port for HTTPS portal redirect, ditto.
+        #UDP:
+        3478  # UDP port used for STUN.
+        10001 # UDP port used for device discovery.
       ])
     (lib.concatMapStrings dropPortNoLog
       [
@@ -97,12 +105,6 @@ in
       ])
   ];
 
-  networking.interfaces."${wirelessInterface}" = {
-    ip4 = [{
-      address = "10.5.2.1";
-      prefixLength = 24;
-    }];
-  };
   networking.interfaces."enp4s0" = {
     ip4 = [{
       address = "10.5.3.1";
@@ -115,39 +117,8 @@ in
     externalInterface = externalInterface;
     internalInterfaces = internalInterfaces;
     internalIPs = [
-      "10.5.2.0/24"
       "10.5.3.0/24"
     ];
-  };
-
-  services.hostapd = {
-    enable = true;
-    wpa = false;
-    ssid = secrets.router.ssid;
-    channel = 2; # Was 9, but 0 means search for best, and 36 seems best by Apple... 2 was best for 2.4ghz
-    interface = wirelessInterface;
-    hwMode = "g"; # was "g" but "a" for 5GHz?
-    extraConfig = ''
-      auth_algs=1
-      wpa=2
-      wpa_passphrase=${secrets.router.passphrase}
-      wpa_key_mgmt=WPA-PSK
-      rsn_pairwise=CCMP
-
-      channel=0
-      wpa_pairwise=TKIP CCMP
-      ieee80211d=1
-      ieee80211h=1
-      ieee80211n=1
-      ieee80211ac=1
-      country_code=US
-    '';
-    #  channel=0
-    #  ieee80211d=1
-    #  country_code=US
-    #  ieee80211n=1
-    #  ieee80211ac=1
-
   };
 
   services.dhcpd4 = {
@@ -155,18 +126,20 @@ in
     interfaces = internalInterfaces;
     extraConfig = ''
       option subnet-mask 255.255.255.0;
-      option broadcast-address 10.5.2.255;
-      option routers 10.5.2.1;
+      option broadcast-address 10.5.3.255;
+      option routers 10.5.3.1;
       option domain-name-servers 4.2.2.1, 4.2.2.2, 4.2.2.3;
       option domain-name "${secrets.router.domainname}";
-      subnet 10.5.2.0 netmask 255.255.255.0 {
-        range 10.5.2.100 10.5.2.200;
-      }
       subnet 10.5.3.0 netmask 255.255.255.0 {
         range 10.5.3.100 10.5.3.200;
       }
 
     '';
+  };
+
+  services.unifi = {
+    enable = true;
+    openPorts = false;
   };
 
   services.netatalk = {
