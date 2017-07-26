@@ -9,19 +9,16 @@ dbg() {
 
 filter_recent_timestamps() {
     since=$(date -d "15 days ago" "+%s")
-    while read timestamp; do
+    while read commit timestamp; do
         if [ "$timestamp" -ge "$since" ]; then
-            echo "$timestamp";
+            echo "$commit $timestamp";
         fi;
     done
 }
 
 datapoints() {
-    cut -d" " -f2 \
-        | filter_recent_timestamps \
-        | sed \
-              -e "s/^/    \[/" \
-              -e 's/$/000, '$i'\],/'
+    cat | filter_recent_timestamps \
+        | awk '{ print "    [\""$1"\", "$2"000, '$i'],"; }'
 }
 
 make_graph() {
@@ -53,7 +50,9 @@ EOF
             name=$(echo "$file" | cut -d/ -f2)
 
             if [ $(echo -n "$datapoints" | wc -c) -ge 1 ]; then
-                echo "{name: '$name', type: 'scatter', data: [";
+                echo "{name: '$name', type: 'scatter', keys: ['commit', 'x', 'y'],";
+                echo 'point: {events: { click: function() { window.open("https://github.com/NixOS/nixpkgs/commit/" + this.commit); }}},'
+                echo "data: [";
                 echo "$datapoints"
                 echo "]},";
             else
