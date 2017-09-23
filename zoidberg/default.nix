@@ -51,6 +51,7 @@ in { pkgs, ... }: {
             path = with pkgs; [
               telnet
               git
+              gawk
             ];
 
             serviceConfig = {
@@ -104,10 +105,13 @@ in { pkgs, ... }: {
   environment = {
     systemPackages = with pkgs; [
       git # for kylechristensen
-      ledger # for matthewturland.com
       weechat
       screen
       tmux
+      aspell
+      aspellDicts.en
+      emacs
+      vim
     ];
   };
 
@@ -149,11 +153,11 @@ in { pkgs, ... }: {
           default = true;
         };
 
-        "zoidberg-ssl.gsc.io" = defaultVhostCfg // {
-          default = true;
-          enableACME = true;
-          enableSSL = true;
-        };
+        #"zoidberg-ssl.gsc.io" = defaultVhostCfg // {
+        #  default = true;
+        #  enableACME = true;
+        #  enableSSL = true;
+        #};
 
         "search.nix.gsc.io" = defaultVhostCfg // {
           enableACME = true;
@@ -180,8 +184,8 @@ in { pkgs, ... }: {
         };
 
         "gsc.io" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
+          #enableACME = true;
+          #forceSSL = true;
           root = "/var/lib/nginx/grahamc/gsc.io/public";
         };
 

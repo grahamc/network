@@ -81,6 +81,8 @@ in
   in lib.concatStrings [
     (lib.concatMapStrings allowPortOnlyPrivately
       [
+        80 # nginx for tftp handoff
+        69 # tftp
         config.services.netatalk.port
         5353 # avahi
 
@@ -128,14 +130,44 @@ in
       option subnet-mask 255.255.255.0;
       option broadcast-address 10.5.3.255;
       option routers 10.5.3.1;
-      option domain-name-servers 4.2.2.1, 4.2.2.2, 4.2.2.3;
+      option domain-name-servers 8.8.8.8;
       option domain-name "${secrets.router.domainname}";
       subnet 10.5.3.0 netmask 255.255.255.0 {
+        if exists user-class and option user-class = "iPXE" {
+          filename "http://10.5.3.1/nixos/netboot.ipxe";
+        } else {
+          filename "ipxe/undionly.kpxe";
+        }
+
+        next-server 10.5.3.1;
         range 10.5.3.100 10.5.3.200;
       }
 
     '';
   };
+
+  services.nginx = {
+    enable = true;
+    virtualHosts.default = {
+      default = true;
+      root = config.services.tftpd.path;
+    };
+
+  };
+
+  services.tftpd = let
+    netboot = (import <nixpkgs/nixos/release.nix> {}).netboot.x86_64-linux;
+  in {
+    enable = true;
+    path = pkgs.runCommand "dhcp-pxe-root" {}
+      ''
+        mkdir $out
+
+      ''; #         ln -s ${netboot} $out/nixos
+              # ln -s ${pkgs.ipxe} $out/ipxe
+  };
+
+
 
   services.unifi = {
     enable = true;
