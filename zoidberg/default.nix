@@ -24,6 +24,7 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
+    (import ./events.nix.nix { inherit secrets; })
 
     {
       users.users.nix-channel-monitor = {
