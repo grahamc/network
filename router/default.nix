@@ -224,6 +224,16 @@ in
         home = "/home/emilyc";
         hashedPassword = secrets.emilyc.password;
       };
+
+      kchristensen = {
+        isNormalUser = true;
+        uid = 1003;
+        createHome = true;
+        home = "/home/kchristensen";
+        openssh.authorizedKeys.keyFiles = [
+          secrets.kchristensen.keys
+        ];
+      };
     };
   };
 

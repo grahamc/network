@@ -20,6 +20,18 @@
       fsType = "zfs";
       options = [ "nofail" ];
     };
+  fileSystems."/home/kchristensen/storage" =
+    { device = "rpool/kyle/storage";
+      fsType = "zfs";
+      options = [ "nofail" ];
+    };
+
+  fileSystems."/media" =
+    { device = "rpool/graham/media";
+      fsType = "zfs";
+      options = [ "nofail" ];
+    };
+
 
   swapDevices = [ ];
 

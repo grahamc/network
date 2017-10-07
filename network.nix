@@ -9,7 +9,7 @@ in {
 
   router = { ... }: {
     deployment = {
-      targetHost = "10.5.3.1";
+      targetHost = "67.246.21.246"; # "10.5.3.1";
     };
 
     imports = [
