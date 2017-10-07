@@ -12,11 +12,11 @@ in {
       };
     };
 
-  security.acme.certs."events.nix.gsc.io" = {
-    plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
-    group = "rabbitmq";
-    allowKeysForGroup = true;
-  };
+  #security.acme.certs."events.nix.gsc.io" = {
+  #  plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
+  #  group = "rabbitmq";
+  #  allowKeysForGroup = true;
+  #};
   services = {
     nginx = {
       virtualHosts = {
@@ -32,7 +32,7 @@ in {
     };
 
     rabbitmq = {
-      enable = true;
+      enable = false;
       cookie = secrets.rabbitmq.cookie;
       plugins = [ "rabbitmq_management" ];
       config = ''
