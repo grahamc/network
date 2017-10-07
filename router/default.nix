@@ -97,6 +97,10 @@ in
         #UDP:
         3478  # UDP port used for STUN.
         10001 # UDP port used for device discovery.
+
+        # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
+        32400 3005 8324 32469 # TCP
+        1900 5353 32410 32412 32413 32414 # UDP
       ])
     (lib.concatMapStrings dropPortNoLog
       [
@@ -107,6 +111,7 @@ in
         9100 # From RT AP
       ])
   ];
+  networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
 
   networking.interfaces."enp4s0" = {
     ip4 = [{
@@ -220,5 +225,21 @@ in
         hashedPassword = secrets.emilyc.password;
       };
     };
+  };
+
+
+  # Plex
+  services.plex = {
+    enable = true;
+    package = pkgs.plex.overrideAttrs (x: {
+      src = pkgs.fetchurl {
+        url = let
+        version = "1.9.2.4285";
+        vsnHash = "9f65b88ae";
+
+      in "https://downloads.plex.tv/plex-media-server/${version}-${vsnHash}/plexmediaserver-${version}-${vsnHash}.x86_64.rpm";
+      sha256 = "0rz53kb4r32s734jhb3n65dcmb0mylhb6wcqinp0dg8w39ncv571";
+      };
+    });
   };
 }
