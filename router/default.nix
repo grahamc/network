@@ -34,6 +34,7 @@ in
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs; [
     emacs
+    screen
   ];
 
   # Basically, we want to allow some ports only locally and refuse

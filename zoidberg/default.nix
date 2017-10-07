@@ -253,15 +253,6 @@ in { pkgs, ... }: {
             ln -s /var/lib/nginx/nix-channel-monitor/monitor /var/lib/nix-channel-monitor/monitor
           fi
           chown nix-channel-monitor:nix-channel-monitor /var/lib/nginx/nix-channel-monitor/monitor/public
-
-          mkdir -p /var/lib/nginx/mturland/matthewturland.com/public
-          chown nginx:nginx /var/lib/nginx/mturland/
-          chown mturland:users /var/lib/nginx/mturland/matthewturland.com
-          chown mturland:users /var/lib/nginx/mturland/matthewturland.com/public
-          if ! test -L /home/mturland/matthewturland.com; then
-            ln -s /var/lib/nginx/mturland/matthewturland.com /home/mturland/matthewturland.com
-          fi
-
         '';
       };
     };
@@ -269,25 +260,6 @@ in { pkgs, ... }: {
 
   users = {
     extraUsers = {
-      mturland = {
-        isNormalUser = true;
-        uid = 1001;
-        createHome = true;
-        home = "/home/mturland";
-        openssh.authorizedKeys.keyFiles = [
-          secrets.mturland.keys
-        ];
-      };
-
-      kylechristensen = {
-        isNormalUser = true;
-        uid = 1003;
-        createHome = true;
-        home = "/home/kylechristensen";
-        openssh.authorizedKeys.keyFiles = [
-          secrets.kylechristensen.keys
-        ];
-      };
     };
   };
 }
