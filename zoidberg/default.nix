@@ -24,8 +24,8 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
+    (import ./micro-ci.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
-
     {
       users.users.nix-channel-monitor = {
         description = "Nix Channel Monitor";
