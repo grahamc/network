@@ -127,6 +127,11 @@ in { pkgs, ... }: {
       enable = true;
       listen = "127.0.0.1:6080";
       config = builtins.readFile ./hound/hound.json;
+      package = pkgs.hound.overrideAttrs (x: {
+        patches = [
+          ./hound/0001-Fail-to-start-if-any-repos-fail-to-index.patch
+        ];
+      });
     };
 
     nginx = {
@@ -223,6 +228,13 @@ in { pkgs, ... }: {
 
   systemd = {
     services = {
+      hound = {
+        serviceConfig = {
+          Restart = "always";
+          RestartSec = 5;
+        };
+      };
+
       urlsdir = {
         wantedBy = [ "multi-user.target" ];
         before = [ "nginx.service" ];
