@@ -7,7 +7,7 @@ in stdenv.mkDerivation rec {
   name = "nixops-personal";
   version = "0.1";
 
-  src = "./";
+  src = builtins.toString ./.;
 
   buildInputs = [
     pkgs.packet
@@ -15,10 +15,14 @@ in stdenv.mkDerivation rec {
     pkgs.jq
   ];
 
-  shellHook = ''
-    export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-    export NIXOS_EXTRA_MODULE_PATH=${builtins.toString ./.}/modules/default.nix
-    export NIXOPS_DEPLOYMENT="personal"
-    export HISTFILE="${builtins.toString ./.}/.bash_hist"
+  phases = [ "donotbuild" ];
+  donotbuild = ''
+    printf "\n\n\nDon't nix-build ${src}! It is a dev environment\n\n\n\n"
+    exit 1
   '';
+
+  SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  NIXOS_EXTRA_MODULE_PATH = "${src}/default.nix";
+  NIXOPS_DEPLOYMENT = "personal";
+  HISTFILE = "${src}/.bash_hist";
 }
