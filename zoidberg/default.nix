@@ -24,7 +24,6 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
-    (import ./micro-ci.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {
@@ -175,10 +174,25 @@ in { pkgs, ... }: {
           '';
         };
 
-        "webhook.nix.gsc.io" = defaultVhostCfg // {
+        "nix.gsc.io" = defaultVhostCfg // {
+          root = ./nix/webroot;
           enableACME = true;
           forceSSL = true;
-          locations."/nixos".alias = pkgs.writeTextDir "nixpkgs" "OK";
+          locations."/".extraConfig = ''
+            autoindex on;
+          '';
+        };
+
+        "webhook.nix.gsc.io" = defaultVhostCfg // {
+          root = "${./gh-event-forwarder}/web";
+          enableACME = true;
+          forceSSL = true;
+
+          extraConfig = ''
+            rewrite  ^/(\d+)$ index.php?n=$1 last;
+          '';
+
+          locations = (vhostPHPLocations pkgs "${./gh-event-forwarder}/web");
         };
 
         "gsc.io" = defaultVhostCfg // {

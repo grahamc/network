@@ -12,11 +12,12 @@ in {
       };
     };
 
-  #security.acme.certs."events.nix.gsc.io" = {
-  #  plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
-  #  group = "rabbitmq";
-  #  allowKeysForGroup = true;
-  #};
+  security.acme.certs."events.nix.gsc.io" = {
+    plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
+    group = "rabbitmq";
+    allowKeysForGroup = true;
+  };
+
   services = {
     nginx = {
       virtualHosts = {
@@ -25,14 +26,14 @@ in {
           forceSSL = true;
           locations."/" = {
             index = "index.html";
-            root = pkgs.writeTextDir "index.html" ":)";
+            root = pkgs.writeTextDir "index.html" "email me for creds: graham-at-grahamc-dot-com, gchristensen on irc";
           };
         };
       };
     };
 
     rabbitmq = {
-      enable = false;
+      enable = true;
       cookie = secrets.rabbitmq.cookie;
       plugins = [ "rabbitmq_management" ];
       config = ''
@@ -44,7 +45,6 @@ in {
                             {certfile,"${cert_dir}/cert.pem"},
                             {keyfile,"${cert_dir}/key.pem"},
                             {verify,verify_none},
-                            {depth, 5},
                             {fail_if_no_peer_cert,false}]},
              {log_levels, [{connection, debug}]}
            ]},

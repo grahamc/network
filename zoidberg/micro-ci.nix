@@ -27,7 +27,7 @@ in {
 
 
   systemd.services.microci = {
-    enable = true;
+    enable = false;
     after = [ "network.target" "network-online.target" ];
     wants = [ "network-online.target" ];
     before = [ "nginx.service" ];

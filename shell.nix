@@ -22,7 +22,7 @@ in stdenv.mkDerivation rec {
   '';
 
   SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-  NIXOS_EXTRA_MODULE_PATH = "${src}/default.nix";
+  NIXOS_EXTRA_MODULE_PATH = "${src}/modules/default.nix";
   NIXOPS_DEPLOYMENT = "personal";
   HISTFILE = "${src}/.bash_hist";
 }
