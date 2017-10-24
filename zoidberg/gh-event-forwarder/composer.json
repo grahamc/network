@@ -1,0 +1,8 @@
+{
+    "require": {
+        "php-amqplib/php-amqplib": ">=2.6.1",
+        "knplabs/github-api": "^2.6@dev",
+        "php-http/guzzle6-adapter": "^1.2@dev"
+    },
+    "minimum-stability": "dev"
+}
