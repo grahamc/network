@@ -52,52 +52,14 @@ function runner($msg) {
         return;
     }
 
-    $root = "/home/grahamc/.nix-test";
-    if (!is_dir($root)) {
-        exit("$root doesn't exist!");
-    }
-    if (!chdir($root)) {
-        exit("Failed to chdir $root");
-    }
-    $pname = $root . "/repo-" . md5($in->repository->full_name);
-    if (!is_dir($pname) || !chdir($pname)) {
-        echo "Cloning " . $in->repository->full_name . " to $pname\n";
-        shell_exec('git clone --bare ' .
-                   escapeshellarg($in->repository->clone_url)
-                   . ' ' . escapeshellarg($pname));
-    } else {
-        echo "fetching " . $in->repository->full_name . " in $pname\n";
-        if (!chdir($pname)) {
-            echo "failed to chdir to $pname\n";
-            exit();
-        }
-        shell_exec('git fetch origin');
-    }
+    $co = new GHE\Checkout("/home/grahamc/.nix-test");
+    $pname = $co->checkOutRef($in->repository->full_name,
+                              $in->repository->clone_url,
+                              $in->issue->number,
+                              "origin/master"
+    );
 
-    $bname = $root . "/build-" . md5($in->repository->full_name)
-           . "-" . $in->issue->number;
-    if (!is_dir($bname) || !chdir($bname)) {
-        echo "Cloning " . $in->issue->html_url . " to $bname\n";
-        shell_exec('git clone --reference-if-able ' .
-                   escapeshellarg($pname) . ' ' .
-                   escapeshellarg($in->repository->clone_url)
-                   . ' ' . escapeshellarg($bname));
-    } else {
-        if (!chdir($bname)) {
-            echo "failed to chdir to $bname\n";
-            exit();
-        }
-
-        echo "fetching " . $in->repository->full_name . " in $bname\n";
-        shell_exec('git fetch origin');
-        shell_exec('git reset --hard origin/master');
-    }
-
-    if (!chdir($bname)) {
-        echo "failed to chdir to $bname\n";
-        exit();
-    }
-    echo shell_exec('curl -L ' . escapeshellarg($in->issue->pull_request->patch_url) . ' | git am --no-gpg-sign -');
+    $co->applyPatches($pname, $in->issue->pull_request->patch_url);
 
     $cmt = array_map(function($term) { return trim($term); },
                      array_filter($cmt,
