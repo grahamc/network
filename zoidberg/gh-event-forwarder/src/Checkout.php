@@ -5,9 +5,11 @@ namespace GHE;
 class Checkout {
 
     protected $root;
+    protected $type;
 
-    function __construct($root) {
+    function __construct($root, $type) {
         $this->root = $root;
+        $this->type = $type;
     }
 
     function checkOutRef($repo_name, $clone_url, $id, $ref) {
@@ -16,8 +18,9 @@ class Checkout {
         $pname = $this->pathToRepoCache($repo_name);
         $bname = $this->pathToBuildDir($repo_name, $id);
 
+        $guard = $this->guard($bname);
         if (!is_dir($bname)) {
-            echo "Cloning " . $in->issue->html_url . " to $bname\n";
+            echo "Cloning " . $id . " to $bname\n";
             Exec::exec('git clone --reference-if-able %s %s %s',
                        [
                            $pname,
@@ -30,9 +33,11 @@ class Checkout {
             throw new CoFailedException("Failed to chdir to $bname\n");
         }
 
-        echo "fetching " . $in->repository->full_name . " in $bname\n";
+        echo "fetching " . $id . " in $bname\n";
         Exec::exec('git fetch origin');
         Exec::exec('git reset --hard %s', [$ref]);
+
+        $this->release($guard);
 
         return $bname;
     }
@@ -42,7 +47,9 @@ class Checkout {
             throw new CoFailedException("Failed to chdir to $bname\n");
         }
 
+        $guard = $this->guard($pname);
         Exec::exec('curl -L %s | git am --no-gpg-sign -', [$patch_url]);
+        $this->release($guard);
     }
 
     function prefetchRepoCache($name, $clone_url) {
@@ -51,6 +58,9 @@ class Checkout {
         }
 
         $pname = $this->pathToRepoCache($name);
+
+        $guard = $this->guard($pname);
+
         if (!is_dir($pname)) {
             echo "Cloning " . $name . " to $pname\n";
             Exec::exec('git clone --bare %s %s',
@@ -59,6 +69,8 @@ class Checkout {
                            $pname
                        ]);
         }
+
+        $this->release($guard);
 
         if (!chdir($pname)) {
             throw new CoFailedException("Failed to chdir to $pname");
@@ -74,7 +86,24 @@ class Checkout {
 
     function pathToBuildDir($repo, $id_number) {
         $id = (int) $id_number;
-        return $this->root . "/build-" . md5($repo) . "-" . $id;
+        $repo_hash = md5($repo);
+        $type = $this->type;
+
+        return $this->root . "/$type-$repo_hash-$id";
+    }
+
+    function guard($path) {
+        $res = fopen("$path.lock", 'c');
+        while (!flock($res, LOCK_EX)) {
+            echo "waiting for lock on $path...\n";
+            sleep(1);
+        }
+
+        return  $res;
+    }
+
+    function release($res) {
+        fclose($res);
     }
 
 }

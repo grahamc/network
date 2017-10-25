@@ -52,7 +52,7 @@ function runner($msg) {
         return;
     }
 
-    $co = new GHE\Checkout("/home/grahamc/.nix-test");
+    $co = new GHE\Checkout("/home/grahamc/.nix-test", "builder");
     $pname = $co->checkOutRef($in->repository->full_name,
                               $in->repository->clone_url,
                               $in->issue->number,
