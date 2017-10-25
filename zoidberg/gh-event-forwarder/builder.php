@@ -69,15 +69,14 @@ function runner($msg) {
 
     if (count($cmt) == 1 && implode("", $cmt) == "default") {
         echo "building via nix-build .\n";
-        reply_to_issue($in, 'nix-build --keep-going . 2>&1');
+        reply_to_issue($in, 'nix-build --keep-going .', []);
     } else {
         echo "building via nix-build . -A\n";
-        $attrs = implode(' ', array_map(function($attr) {
-            return "-A " . escapeshellarg($attr);
-        }, $cmt));
-        var_dump($attrs);
+        $attrs = array_intersperse($cmt, '-A');
 
-        reply_to_issue($in, 'nix-build --keep-going . ' . $attrs . ' 2>&1');
+        $fillers = implode(" ", array_fill(0, count($attrs), '%s'));
+
+        reply_to_issue($in, 'nix-build --keep-going . ' . $fillers, $attrs);
     }
 
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
@@ -85,7 +84,18 @@ function runner($msg) {
     // shell_exec('git fetch origin && git reset --hard origin/master && ');
 }
 
-function reply_to_issue($issue, $to_exec) {
+function array_intersperse($array, $val) {
+    array_reduce($l,
+                      function($c, $elem) {
+                          $c[] = $val;
+                          $c[] = $elem;
+                          return $c;
+                      },
+                      array());
+}
+
+
+function reply_to_issue($issue, $to_exec, $args) {
     $client = gh_client();
     $pr = $client->api('pull_request')->show(
         $issue->repository->owner->login,
@@ -94,7 +104,13 @@ function reply_to_issue($issue, $to_exec) {
     );
     $sha = $pr['head']['sha'];
 
-    exec($to_exec, $output, $return);
+    try {
+        $output = GHE\Exec::exec($to_exec, $args);
+        $pass = true;
+    } catch (GHE\ExecException $e) {
+        $output = $e->getOutput();
+        $pass = false;
+    }
 
     // var_dump($issue);
 
@@ -119,7 +135,7 @@ function reply_to_issue($issue, $to_exec) {
         $issue->issue->number,
         array(
             'body' => "```\n$lastlines\n```",
-            'event' => $return == 0 ? 'APPROVE' : 'COMMENT',
+            'event' => $pass ? 'APPROVE' : 'COMMENT',
             'commit_id' => $sha,
         ));
 

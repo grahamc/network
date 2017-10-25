@@ -35,7 +35,13 @@ class Checkout {
 
         echo "fetching " . $id . " in $bname\n";
         Exec::exec('git fetch origin');
+        try {
+            Exec::exec('git am --abort');
+        } catch (ExecException $e) {
+            // non-zero exit if no am is in progress
+        }
         Exec::exec('git reset --hard %s', [$ref]);
+
 
         $this->release($guard);
 
