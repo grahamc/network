@@ -1,56 +1,23 @@
 <?php
 
 require __DIR__ . '/config.php';
+use PhpAmqpLib\Message\AMQPMessage;
 
 # define('AMQP_DEBUG', true);
 $connection = rabbitmq_conn();
 $channel = $connection->channel();
 
-
-list($queueName, , ) = $channel->queue_declare('build-inputs',
+list($queueName, , ) = $channel->queue_declare('build-results',
                                                false, true, false, false);
-var_dump($queueName);
-$channel->queue_bind($queueName, 'nixos/nixpkgs');
-$channel->queue_bind($queueName, 'grahamc/elm-stuff');
+
+list($queueName, , ) = $channel->queue_declare('build-inputs-x86_64-linux',
+                                               false, true, false, false);
+$channel->queue_bind($queueName, 'build-jobs');
+
 
 function runner($msg) {
-    $in = json_decode($msg->body);
-    if (!isset($in->comment)) {
-        echo "event not a comment\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
-    }
-
-    if (!\GHE\ACL::isUserAuthorized($in->comment->user->login)) {
-        echo "commenter not ok (" . $in->comment->user->login . ")\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
-    }
-
-    if (!\GHE\ACL::isRepoEligible($in->repository->full_name)) {
-        echo "repo not ok (" . $in->repository->full_name . ")\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
-    }
-
-    if (!isset($in->issue->pull_request)) {
-        echo "not a PR\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
-    }
-
-    #if ($in->issue->pull_request->state != "open") {
-    #   echo "PR isn't open\n";
-    #   $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-    #   return;
-    #}
-
-    $cmt = explode(' ', strtolower($in->comment->body));
-    if (!in_array('@grahamcofborg', $cmt)) {
-        echo "not a borgpr\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
-    }
+    $body = json_decode($msg->body);
+    $in = $body->payload;
 
     $co = new GHE\Checkout("/home/grahamc/.nix-test", "builder");
     $pname = $co->checkOutRef($in->repository->full_name,
@@ -61,58 +28,29 @@ function runner($msg) {
 
     $co->applyPatches($pname, $in->issue->pull_request->patch_url);
 
-    $cmt = array_map(function($term) { return trim($term); },
-                     array_filter($cmt,
-                                  function($term) { return $term != "@grahamcofborg"; }
-                     )
-    );
-
-    if (count($cmt) == 1 && implode("", $cmt) == "default") {
+    if ($body->build_default) {
         echo "building via nix-build .\n";
-        reply_to_issue($in, 'nix-build --keep-going .', []);
+
+        $cmd = 'nix-build --keep-going .';
+        $args = [];
     } else {
         echo "building via nix-build . -A\n";
-        $attrs = array_intersperse($cmt, '-A');
+        $attrs = array_intersperse(array_values((array)$body->attrs), '-A');
+        var_dump($attrs);
 
         $fillers = implode(" ", array_fill(0, count($attrs), '%s'));
 
-        reply_to_issue($in, 'nix-build --keep-going . ' . $fillers, $attrs);
+        $cmd = 'nix-build --keep-going . ' . $fillers;
+        $args = $attrs;
     }
 
-    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-
-    // shell_exec('git fetch origin && git reset --hard origin/master && ');
-}
-
-function array_intersperse($array, $val) {
-    array_reduce($l,
-                      function($c, $elem) {
-                          $c[] = $val;
-                          $c[] = $elem;
-                          return $c;
-                      },
-                      array());
-}
-
-
-function reply_to_issue($issue, $to_exec, $args) {
-    $client = gh_client();
-    $pr = $client->api('pull_request')->show(
-        $issue->repository->owner->login,
-        $issue->repository->name,
-        $issue->issue->number
-    );
-    $sha = $pr['head']['sha'];
-
     try {
-        $output = GHE\Exec::exec($to_exec, $args);
+        $output = GHE\Exec::exec($cmd, $args);
         $pass = true;
     } catch (GHE\ExecException $e) {
         $output = $e->getOutput();
         $pass = false;
     }
-
-    // var_dump($issue);
 
     $lastlines = implode("\n",
                          array_reverse(
@@ -123,22 +61,26 @@ function reply_to_issue($issue, $to_exec, $args) {
                          )
     );
 
-    $reviews = $client->api('pull_request')->reviews()->all(
-        $issue->repository->owner->login,
-        $issue->repository->name,
-        $issue->issue->number
-    );
+    $forward = [
+        'payload' => $in,
+        'output' => $output,
+        'success' => $pass,
+    ];
 
-    $client->api('pull_request')->reviews()->create(
-        $issue->repository->owner->login,
-        $issue->repository->name,
-        $issue->issue->number,
-        array(
-            'body' => "```\n$lastlines\n```",
-            'event' => $pass ? 'APPROVE' : 'COMMENT',
-            'commit_id' => $sha,
-        ));
+    $message = new AMQPMessage(json_encode($forward),
+                               array('content_type' => 'application/json'));
+    $msg->delivery_info['channel']->basic_publish($message, '', 'build-results');
+    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+}
 
+function array_intersperse($array, $val) {
+    return array_reduce($array,
+                        function($c, $elem) use ($val) {
+                            $c[] = $val;
+                            $c[] = $elem;
+                            return $c;
+                        },
+                        array());
 }
 
 
