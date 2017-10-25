@@ -18,6 +18,7 @@ class ACL {
             'globin',
             'grahamc',
             'lnl7',
+            'mic92',
             'shlevy',
         ];
     }
