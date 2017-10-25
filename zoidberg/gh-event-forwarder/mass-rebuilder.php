@@ -10,8 +10,7 @@ $channel = $connection->channel();
 
 
 list($queueName, , ) = $channel->queue_declare('mass-rebuild-checks',
-                                               false, true, false,
-                                               false);
+                                               false, true, false, false);
 $channel->queue_bind($queueName, 'nixos/nixpkgs');
 
 function outrunner($msg) {

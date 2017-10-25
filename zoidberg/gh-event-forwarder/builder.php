@@ -7,8 +7,8 @@ $connection = rabbitmq_conn();
 $channel = $connection->channel();
 
 
-list($queueName, , ) = $channel->queue_declare('', false, false, true,
-                                               true);
+list($queueName, , ) = $channel->queue_declare('build-inputs',
+                                               false, true, false, false);
 var_dump($queueName);
 $channel->queue_bind($queueName, 'nixos/nixpkgs');
 $channel->queue_bind($queueName, 'grahamc/elm-stuff');
@@ -141,8 +141,20 @@ function reply_to_issue($issue, $to_exec, $args) {
 
 }
 
+
+function outrunner($msg) {
+    try {
+        return runner($msg);
+    } catch (ExecException $e) {
+        var_dump($e->getMessage());
+        var_dump($e->getCode());
+        var_dump($e->getOutput());
+    }
+}
+
+
 $consumerTag = 'consumer' . getmypid();
-$channel->basic_consume($queueName, $consumerTag, false, false, false, false, 'runner');
+$channel->basic_consume($queueName, $consumerTag, false, false, false, false, 'outrunner');
 while(count($channel->callbacks)) {
     $channel->wait();
 }
