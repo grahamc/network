@@ -4,5 +4,8 @@
         "knplabs/github-api": "^2.6@dev",
         "php-http/guzzle6-adapter": "^1.2@dev"
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {"GHE\\": "src/"}
+    }
 }

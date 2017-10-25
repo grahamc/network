@@ -21,30 +21,13 @@ function runner($msg) {
         return;
     }
 
-    $ok_names = [
-        'nixos/nixpkgs',
-        'grahamc/elm-stuff',
-    ];
-    $ok_commenters = [
-        'grahamc',
-        'fpletz',
-        'domenkozar',
-        'copumpkin',
-        'shlevy',
-        'globin',
-        'lnl7',
-        'fridh',
-    ];
-
-
-    if (!in_array(strtolower($in->comment->user->login), $ok_commenters)) {
-        echo "commenter not ok (" . $in->comment->user->login .
-                                  ")\n";
+    if (!\GHE\ACL::isUserAuthorized($in->comment->user->login)) {
+        echo "commenter not ok (" . $in->comment->user->login . ")\n";
         $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
         return;
     }
 
-    if (!in_array(strtolower($in->repository->full_name), $ok_names)) {
+    if (!\GHE\ACL::isRepoEligible($in->repository->full_name)) {
         echo "repo not ok (" . $in->repository->full_name . ")\n";
         $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
         return;

@@ -12,14 +12,8 @@ if (!isset($input['repository']['full_name'])) {
    exit(0);
 }
 
-$name = strtolower($input['repository']['full_name']);
-$ok_names = [
-  'nixos/nixpkgs',
-  'nixos/nix-pills',
-  'grahamc/elm-stuff'
-];
 
-if (!in_array(strtolower($name), $ok_names)) {
+if (!GHE\ACL::isRepoEligible($input['repository']['full_name'])) {
    echo "repo not in ok name list";
    exit(1);
 }
