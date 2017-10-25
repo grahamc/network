@@ -13,7 +13,8 @@ if (!isset($input['repository']['full_name'])) {
 }
 
 
-if (!GHE\ACL::isRepoEligible($input['repository']['full_name'])) {
+$name = strtolower($input['repository']['full_name']);
+if (!GHE\ACL::isRepoEligible($name)) {
    echo "repo not in ok name list";
    exit(1);
 }
