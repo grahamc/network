@@ -62,12 +62,11 @@ function runner($msg) {
                               "origin/master"
     );
 
+    $prev = GHE\Exec::exec('git rev-parse HEAD');
+
     $co->applyPatches($pname, $in->issue->pull_request->patch_url);
 
-    $prev = shell_exec('git rev-parse HEAD');
-    echo shell_exec('curl -L ' . escapeshellarg($in->issue->pull_request->patch_url) . ' | git am --no-gpg-sign -');
-
-    reply_to_issue($in, trim($prev));
+    reply_to_issue($in, $prev[0]);
 
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
 }
@@ -83,15 +82,15 @@ function reply_to_issue($issue, $prev) {
     $head = $pr['head']['sha'];
     $base = $pr['base']['sha'];
 
-    $cmd = "$(nix-instantiate --eval -E '<nixpkgs/maintainers/scripts/rebuild-amount.sh>') "
-         . escapeshellarg($prev)
-         . " | tail -n+2";
-    echo "$cmd\n";
-
-    $c = shell_exec($cmd);
+    $output = GHE\Exec::exec('$(nix-instantiate --eval -E %s) %s',
+                             [
+                                 '<nixpkgs/maintainers/scripts/rebuild-amount.sh>',
+                                 $prev
+                             ]
+    );
 
     $labels = [];
-    foreach (explode("\n", $c) as $line) {
+    foreach ($output as $line) {
         if (preg_match('/^\s*(\d+) (.*)$/', $line, $matches)) {
             var_dump($matches);
             if ($matches[1] > 2500) {
