@@ -31,8 +31,8 @@ function runner($msg) {
     if ($body->build_default) {
         echo "building via nix-build .\n";
 
-        $cmd = 'nix-build --keep-going .';
-        $args = [];
+        $cmd = 'NIX_PATH=nixpkgs=%s nix-build --option restrict-eval true --keep-going .';
+        $args = [$pname];
     } else {
         echo "building via nix-build . -A\n";
         $attrs = array_intersperse(array_values((array)$body->attrs), '-A');
@@ -40,8 +40,9 @@ function runner($msg) {
 
         $fillers = implode(" ", array_fill(0, count($attrs), '%s'));
 
-        $cmd = 'nix-build --keep-going . ' . $fillers;
+        $cmd = 'NIX_PATH=nixpkgs=%s nix-build --option restrict-eval true --keep-going . ' . $fillers;
         $args = $attrs;
+        array_unshift($args, $pname);
     }
 
     try {
@@ -52,18 +53,16 @@ function runner($msg) {
         $pass = false;
     }
 
-    $lastlines = implode("\n",
-                         array_reverse(
-                             array_slice(
-                                 array_reverse($output),
-                                 0, 10
-                             )
-                         )
+    $lastlines = array_reverse(
+        array_slice(
+            array_reverse($output),
+            0, 10
+        )
     );
 
     $forward = [
         'payload' => $in,
-        'output' => $output,
+        'output' => $lastlines,
         'success' => $pass,
     ];
 
