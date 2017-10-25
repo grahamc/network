@@ -17,41 +17,47 @@ $channel->queue_bind($queueName, 'grahamc/elm-stuff');
 
 function runner($msg) {
     $in = json_decode($msg->body);
-    if (!isset($in->comment)) {
-        echo "event not a comment\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+
+    try {
+        $etype = \GHE\EventClassifier::classifyEvent($in);
+
+        if ($etype != "issue_comment") {
+            echo "Skipping event type: $etype\n";
+            return true;
+        }
+    } catch (\GHE\EventClassifierUnknownException $e) {
+        echo "Skipping unknown event type\n";
+        print_r($in);
+        return true;
     }
 
     if (!\GHE\ACL::isUserAuthorized($in->comment->user->login)) {
-        echo "commenter not ok (" . $in->comment->user->login . ")\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+        echo "Commenter not authorized (" . $in->comment->user->login . ")\n";
+        return true;
     }
 
     if (!\GHE\ACL::isRepoEligible($in->repository->full_name)) {
-        echo "repo not ok (" . $in->repository->full_name . ")\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+        echo "Repo not authorized (" . $in->repository->full_name . ")\n";
+        return true;
     }
 
     if (!isset($in->issue->pull_request)) {
         echo "not a PR\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+        return true;
     }
 
+    # // We don't get a useful pull_request here, we'd have to fetch it
+    # to know if it is open
     #if ($in->issue->pull_request->state != "open") {
-    #   echo "PR isn't open\n";
-    #   $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-    #   return;
-    #}
+    #    var_dump($in->issue->pull_request);
+    #    echo "PR isn't open\n";
+    #    return true;
+    # }
 
     $cmt = explode(' ', strtolower($in->comment->body));
     if (!in_array('@grahamcofborg', $cmt)) {
         echo "not a borgpr\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+        return true;
     }
 
     $tokens = array_map(function($term) { return trim($term); },
@@ -82,14 +88,16 @@ function runner($msg) {
     $message = new AMQPMessage(json_encode($forward),
                                array('content_type' => 'application/json'));
     $msg->delivery_info['channel']->basic_publish($message, 'build-jobs');
-    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+    return true;
 }
 
 
 function outrunner($msg) {
     try {
-        return runner($msg);
-    } catch (ExecException $e) {
+        if (runner($msg) === true) {
+            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+        }
+    } catch (\GHE\ExecException $e) {
         var_dump($e->getMessage());
         var_dump($e->getCode());
         var_dump($e->getOutput());
