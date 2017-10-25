@@ -20,7 +20,6 @@ function runner($msg) {
         'success' => $pass,
     ];
 
-
     reply_to_issue($in, implode("\n", $body->output), $body->success);
 
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);

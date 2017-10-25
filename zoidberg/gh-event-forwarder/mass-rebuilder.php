@@ -15,8 +15,17 @@ $channel->queue_bind($queueName, 'nixos/nixpkgs');
 
 function outrunner($msg) {
     try {
-        return runner($msg);
-    } catch (ExecException $e) {
+        $ret = runner($msg);
+        var_dump($ret);
+        if ($ret === true) {
+            echo "acking\n";
+            $r = $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+            var_dump($r);
+        } else {
+            echo "Not acking?\n";
+        }
+    } catch (\GHE\ExecException $e) {
+        var_dump($msg);
         var_dump($e->getMessage());
         var_dump($e->getCode());
         var_dump($e->getOutput());
@@ -26,71 +35,66 @@ function outrunner($msg) {
 function runner($msg) {
     $in = json_decode($msg->body);
 
-    $ok_names = [
-        'nixos/nixpkgs',
-    ];
+    try {
+        $etype = \GHE\EventClassifier::classifyEvent($in);
 
-    if (!in_array(strtolower($in->repository->full_name), $ok_names)) {
-        echo "repo not ok (" . $in->repository->full_name . ")\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+        if ($etype != "pull_request") {
+            echo "Skipping event type: $etype\n";
+            return true;
+        }
+    } catch (\GHE\EventClassifierUnknownException $e) {
+        echo "Skipping unknown event type\n";
+        print_r($in);
+        return true;
     }
 
-    if (!isset($in->issue) || !isset($in->issue->number)) {
-        echo "not an issue\n";
-        $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        return;
+    if (!\GHE\ACL::isRepoEligible($in->repository->full_name)) {
+        echo "Repo not authorized (" . $in->repository->full_name . ")\n";
+        return true;
     }
 
-    #if (!isset($in->issue->pull_request)) {
-    #   echo "not a PR\n";
-    #   $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-    #   return;
-    #}
-
-    #if ($in->issue->pull_request->state != "open") {
-    #   echo "PR isn't open\n";
-    #   $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-    #   return;
-    #}
+    if ($in->pull_request->state != "open") {
+        echo "PR isn't open\n";
+        return true;
+    }
 
     $ok_events = [
         'created',
         'edited',
-        'synchronized',
+        'synchronize',
     ];
+
     if (!in_array($in->action, $ok_events)) {
         echo "Uninteresting event " . $in->action . "\n";
-        #$msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        #return;
+        return true;
     }
 
-    $co = new GHE\Checkout("/home/grahamc/.nix-test", "mr-est");
+        $against = "origin/" . $in->pull_request->base->ref;
+        echo "Building against $against\n";
+        $co = new GHE\Checkout("/home/grahamc/.nix-test", "mr-est");
     $pname = $co->checkOutRef($in->repository->full_name,
-                              $in->repository->clone_url,
-                              $in->issue->number,
-                              "origin/master"
-    );
+            $in->repository->clone_url,
+            $in->number,
+            $against
+            );
 
-    $prev = GHE\Exec::exec('git rev-parse HEAD');
+    try {
+        $co->applyPatches($pname, $in->pull_request->patch_url);
+    } catch (GHE\ExecException $e) {
+        echo "Received ExecException applying patches, likely due to conflicts:\n";
+        var_dump($e->getCode());
+        var_dump($e->getMessage());
+        var_dump($e->getArgs());
+        var_dump($e->getOutput());
+        return true;
+    }
 
-    $co->applyPatches($pname, $in->issue->pull_request->patch_url);
-
-    reply_to_issue($in, $prev[0]);
-
-    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+    reply_to_issue($in, $against);
+    return true;
 }
 
 function reply_to_issue($issue, $prev) {
     $client = gh_client();
-
-    $pr = $client->api('pull_request')->show(
-        $issue->repository->owner->login,
-        $issue->repository->name,
-        $issue->issue->number
-    );
-    $head = $pr['head']['sha'];
-    $base = $pr['base']['sha'];
 
     $output = GHE\Exec::exec('$(nix-instantiate --eval -E %s) %s',
                              [
@@ -114,12 +118,12 @@ function reply_to_issue($issue, $prev) {
     }
 
     foreach ($labels as $label) {
-        echo "would label +$label\n";
+        echo "will label +$label\n";
 
         $client->api('issue')->labels()->add(
             $issue->repository->owner->login,
             $issue->repository->name,
-            $issue->issue->number,
+            $issue->number,
             $label);
     }
 }
