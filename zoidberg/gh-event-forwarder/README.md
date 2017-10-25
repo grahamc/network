@@ -18,3 +18,40 @@
 4. poster.php declares the build-results queue, and listens for
    messages on it. It posts the build status and text output on the PR
    the build is from.
+
+
+The conspicuously missing config.php looks like:
+
+```php
+<?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+use PhpAmqpLib\Connection\AMQPSSLConnection;
+use PhpAmqpLib\Message\AMQPMessage;
+
+function rabbitmq_conn() {
+    $connection = new AMQPSSLConnection(
+        'events.nix.gsc.io', 5671,
+        eventsuser, eventspasswordd, '/', array(
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+            'peer_name' => 'events.nix.gsc.io',
+            'verify_depth' => 10,
+            'ca_file' => '/etc/ssl/certs/ca-certificates.crt'
+        )
+    );
+
+    return $connection;
+}
+
+function gh_client() {
+    $client = new \Github\Client();
+    $client->authenticate('githubusername',
+                          'githubpassword',
+                          Github\Client::AUTH_HTTP_PASSWORD);
+
+    return $client;
+
+
+}
+```
