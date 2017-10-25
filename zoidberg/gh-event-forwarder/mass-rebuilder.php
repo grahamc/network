@@ -9,9 +9,20 @@ $connection = rabbitmq_conn();
 $channel = $connection->channel();
 
 
-list($queueName, , ) = $channel->queue_declare('', false, false, true,
-                                               true);
+list($queueName, , ) = $channel->queue_declare('mass-rebuild-checks',
+                                               false, true, false,
+                                               false);
 $channel->queue_bind($queueName, 'nixos/nixpkgs');
+
+function outrunner($msg) {
+    try {
+        return runner($msg);
+    } catch (ExecException $e) {
+        var_dump($e->getMessage());
+        var_dump($e->getCode());
+        var_dump($e->getOutput());
+    }
+}
 
 function runner($msg) {
     $in = json_decode($msg->body);
@@ -112,13 +123,10 @@ function reply_to_issue($issue, $prev) {
             $issue->issue->number,
             $label);
     }
-
-
-
 }
 
 $consumerTag = 'consumer' . getmypid();
-$channel->basic_consume($queueName, $consumerTag, false, false, false, false, 'runner');
+$channel->basic_consume($queueName, $consumerTag, false, false, false, false, 'outrunner');
 while(count($channel->callbacks)) {
     $channel->wait();
 }
