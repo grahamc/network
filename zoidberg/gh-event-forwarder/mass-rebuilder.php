@@ -107,11 +107,31 @@ function reply_to_issue($issue, $prev) {
     foreach ($output as $line) {
         if (preg_match('/^\s*(\d+) (.*)$/', $line, $matches)) {
             var_dump($matches);
-            if ($matches[1] > 2500) {
+            # TODO: separate out the rebuild ranges from the rebuild platform and
+            # splice the string together, rather than this ugliness
+            if ($matches[1] > 500) {
                 if ($matches[2] == "x86_64-darwin") {
-                    $labels[] = "1.severity: mass-darwin-rebuild";
+                    $labels[] = "10.rebuild-darwin: 501+";
                 } else {
-                    $labels[] = "1.severity: mass-rebuild";
+                    $labels[] = "10.rebuild-linux: 501+";
+                }
+            } else if ($matches[1] > 100 && $matches[1] <= 500) {
+                if ($matches[2] == "x86_64-darwin") {
+                    $labels[] = "10.rebuild-darwin: 101-500";
+                } else {
+                    $labels[] = "10.rebuild-linux: 101-500";
+                }
+            } else if ($matches[1] > 10 && $matches[1] <= 100) {
+                if ($matches[2] == "x86_64-darwin") {
+                    $labels[] = "10.rebuild-darwin: 11-100";
+                } else {
+                    $labels[] = "10.rebuild-linux: 11-100";
+                }
+            } else if ($matches[1] <= 10) {
+                if ($matches[2] == "x86_64-darwin") {
+                    $labels[] = "10.rebuild-darwin: 1-10";
+                } else {
+                    $labels[] = "10.rebuild-linux: 1-10";
                 }
             }
         }
