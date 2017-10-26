@@ -69,14 +69,22 @@ function runner($msg) {
         return true;
     }
 
-        $against = "origin/" . $in->pull_request->base->ref;
-        echo "Building against $against\n";
+    $r = $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+    var_dump($r);
+    echo "acked\n";
+
+
+        $against_name = "origin/" . $in->pull_request->base->ref;
+        echo "Building against $against_name\n";
         $co = new GHE\Checkout("/home/grahamc/.nix-test", "mr-est");
     $pname = $co->checkOutRef($in->repository->full_name,
             $in->repository->clone_url,
             $in->number,
-            $against
+            $against_name
             );
+
+    $against = GHE\Exec::exec('git rev-parse %s', [$against_name]);
+    echo " $against_name is $against[0]\n";
 
     try {
         $co->applyPatches($pname, $in->pull_request->patch_url);
@@ -89,17 +97,31 @@ function runner($msg) {
         return true;
     }
 
-    reply_to_issue($in, $against);
+    $current = GHE\Exec::exec('git rev-parse HEAD');
+    echo " currently at ${current[0]}\n";
+
+
+    reply_to_issue($in, $against[0], $current[0]);
+    $msg->delivery_info['channel']->basic_cancel($msg->delivery_info['consumer_tag']);
     return true;
 }
 
-function reply_to_issue($issue, $prev) {
+function reply_to_issue($issue, $prev, $current) {
     $client = gh_client();
 
-    $output = GHE\Exec::exec('$(nix-instantiate --eval -E %s) %s',
+    echo "current labels:\n";
+    $already_there = $client->api('issue')->labels()->all(
+        $issue->repository->owner->login,
+        $issue->repository->name,
+        $issue->number);
+    $already_there = array_map(function($val) { return $val['name']; }, $already_there);
+    var_dump($already_there);
+
+    $output = GHE\Exec::exec('$(nix-instantiate --eval -E %s) %s %s',
                              [
                                  '<nixpkgs/maintainers/scripts/rebuild-amount.sh>',
-                                 $prev
+                                 $prev,
+                                 $current
                              ]
     );
 
@@ -137,8 +159,15 @@ function reply_to_issue($issue, $prev) {
         }
     }
 
+
     foreach ($labels as $label) {
-        echo "will label +$label\n";
+        if (in_array($label, $already_there)) {
+            echo "already labeled $label\n";
+
+            continue;
+        } else {
+            echo "will label +$label\n";
+        }
 
         $client->api('issue')->labels()->add(
             $issue->repository->owner->login,
