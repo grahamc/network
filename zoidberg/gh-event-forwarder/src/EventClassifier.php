@@ -32,6 +32,18 @@ class EventClassifier {
             return "status";
         }
 
+        if (self::isPushEvent($payload)) {
+            return "push";
+        }
+
+        if (self::isWatchEvent($payload)) {
+            return "watch";
+        }
+
+        if (self::isForkEvent($payload)) {
+            return "fork";
+        }
+
         throw new EventClassifierUnknownException();
     }
 
@@ -97,6 +109,22 @@ class EventClassifier {
             && in_array($payload->state,
                         ['pending', 'success', 'failure', 'error']);
 
+    }
+
+    public static function isPushEvent($payload) {
+        return isset($payload->head_commit)
+            && isset($payload->commits)
+            && isset($payload->compare)
+            && isset($payload->forced);
+    }
+
+    public static function isWatchEvent($payload) {
+        return isset($payload->action)
+            && $payload->action == "started";
+    }
+
+    public static function isForkEvent($payload) {
+        return isset($payload->forkee);
     }
 
 }
