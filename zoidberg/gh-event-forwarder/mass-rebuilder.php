@@ -7,6 +7,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 # define('AMQP_DEBUG', true);
 $connection = rabbitmq_conn();
 $channel = $connection->channel();
+$channel->basic_qos(null, 1, true);
 
 
 list($queueName, , ) = $channel->queue_declare('mass-rebuild-checks',

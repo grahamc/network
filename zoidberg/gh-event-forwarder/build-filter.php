@@ -6,6 +6,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 # define('AMQP_DEBUG', true);
 $connection = rabbitmq_conn();
 $channel = $connection->channel();
+$channel->basic_qos(null, 1, true);
 
 $channel->exchange_declare('build-jobs', 'fanout', false, true, false);
 
