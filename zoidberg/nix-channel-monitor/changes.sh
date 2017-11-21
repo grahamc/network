@@ -66,7 +66,7 @@ EOF
   ]
 });
   </script>
-
+  <noscript>you need to enable javascript to view the graph</noscript>
 EOF
 }
 
