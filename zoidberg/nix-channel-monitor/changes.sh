@@ -8,7 +8,7 @@ dbg() {
 }
 
 filter_recent_timestamps() {
-    since=$(date -d "15 days ago" "+%s")
+    since=$(date -d "3 months ago" "+%s")
     while read commit timestamp; do
         if [ "$timestamp" -ge "$since" ]; then
             echo "$commit $timestamp";
