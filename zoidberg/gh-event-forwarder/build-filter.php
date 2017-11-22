@@ -61,10 +61,12 @@ function runner($msg) {
         return true;
     }
 
+    $cmt = explode(' ', $in->comment->body);
+
     $tokens = array_map(function($term) { return trim($term); },
                      array_filter($cmt,
                                   function($term) {
-                                      return !in_array($term, [
+                                      return !in_array(strtolower($term), [
                                           "@grahamcofborg",
                                           "",
                                       ]);
@@ -73,6 +75,8 @@ function runner($msg) {
     );
 
     if (count($tokens) == 1 && implode("", $tokens) == "default") {
+        echo "default support is blocked\n";
+        return true;
         $forward = [
             'payload' => $in,
             'build_default' => true,
@@ -85,6 +89,8 @@ function runner($msg) {
             'attrs' => $tokens,
         ];
     }
+
+    echo "forwarding to build-jobs :)\n";
 
     $message = new AMQPMessage(json_encode($forward),
                                array('content_type' => 'application/json'));

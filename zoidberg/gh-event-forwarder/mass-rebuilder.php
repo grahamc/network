@@ -14,14 +14,18 @@ list($queueName, , ) = $channel->queue_declare('mass-rebuild-checks',
                                                false, true, false, false);
 $channel->queue_bind($queueName, 'nixos/nixpkgs');
 
+echo "hi\n";
+
 function outrunner($msg) {
     try {
         $ret = runner($msg);
         var_dump($ret);
         if ($ret === true) {
+            echo "cool\n";
             echo "acking\n";
             $r = $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
             var_dump($r);
+            echo "acked\n";
         } else {
             echo "Not acking?\n";
         }
@@ -95,7 +99,7 @@ function runner($msg) {
         var_dump($e->getMessage());
         var_dump($e->getArgs());
         var_dump($e->getOutput());
-        return true;
+        return false;
     }
 
     $current = GHE\Exec::exec('git rev-parse HEAD');
@@ -104,7 +108,7 @@ function runner($msg) {
 
     reply_to_issue($in, $against[0], $current[0]);
     $msg->delivery_info['channel']->basic_cancel($msg->delivery_info['consumer_tag']);
-    return true;
+    return false;
 }
 
 function reply_to_issue($issue, $prev, $current) {
@@ -179,7 +183,9 @@ function reply_to_issue($issue, $prev, $current) {
 }
 
 $consumerTag = 'consumer' . getmypid();
-$channel->basic_consume($queueName, $consumerTag, false, false, false, false, 'outrunner');
+$channel->basic_consume($queueName, $consumerTag, false, true, false, false, 'outrunner');
 while(count($channel->callbacks)) {
     $channel->wait();
 }
+
+echo "Bye\n";

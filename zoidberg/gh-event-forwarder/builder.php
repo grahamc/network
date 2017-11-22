@@ -17,6 +17,7 @@ $channel->queue_bind($queueName, 'build-jobs');
 
 
 function runner($msg) {
+    echo "got a job!\n";
     $body = json_decode($msg->body);
     $in = $body->payload;
 
@@ -27,7 +28,9 @@ function runner($msg) {
                               "origin/master"
     );
 
-    $co->applyPatches($pname, $in->issue->pull_request->patch_url);
+    $patch_url = $in->issue->pull_request->patch_url;
+    echo "Building $patch_url\n";
+    $co->applyPatches($pname, $patch_url);
 
     if ($body->build_default) {
         echo "building via nix-build .\n";
@@ -71,6 +74,8 @@ function runner($msg) {
                                array('content_type' => 'application/json'));
     $msg->delivery_info['channel']->basic_publish($message, '', 'build-results');
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+
+    echo "finished\n";
 }
 
 function array_intersperse($array, $val) {

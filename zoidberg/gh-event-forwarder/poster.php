@@ -15,6 +15,13 @@ function runner($msg) {
     $body = json_decode($msg->body);
     $in = $body->payload;
 
+    $num = $in->issue->number;
+    if ($body->success) {
+        echo "yay! $num passed!\n";
+    } else {
+        echo "Yikes, $num failede\n";
+    }
+
     reply_to_issue($in, implode("\n", $body->output), $body->success);
 
     var_dump($body->success);
