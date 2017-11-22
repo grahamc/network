@@ -108,13 +108,8 @@ in { pkgs, ... }: {
   };
 
   services = {
-    bitlbee = {
+    fail2ban = {
       enable = true;
-      authMode = "Closed";
-      extraSettings = ''
-        AuthPassword = ${secrets.bitlbee.authPassword}
-        OperPassword = ${secrets.bitlbee.operPassword}
-      '';
     };
 
     mysql = {
