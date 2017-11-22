@@ -24,6 +24,7 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
+    ./gcofborg.nix
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {
@@ -178,8 +179,10 @@ in { pkgs, ... }: {
           '';
         };
 
-        "webhook.nix.gsc.io" = defaultVhostCfg // {
-          root = "${./gh-event-forwarder}/web";
+        "webhook.nix.gsc.io" = defaultVhostCfg // (let
+          src  = pkgs.callPackage ./gcofborgpkg.nix {};
+        in {
+          root = "${src}/web";
           enableACME = true;
           forceSSL = true;
 
@@ -187,8 +190,8 @@ in { pkgs, ... }: {
             rewrite  ^/(\d+)$ index.php?n=$1 last;
           '';
 
-          locations = (vhostPHPLocations pkgs "${./gh-event-forwarder}/web");
-        };
+          locations = (vhostPHPLocations pkgs "${src}/web");
+        });
 
         "gsc.io" = defaultVhostCfg // {
           #enableACME = true;
@@ -219,8 +222,7 @@ in { pkgs, ... }: {
     phpfpm.pools.main = {
       listen = "/run/php-fpm.sock";
       extraConfig = ''
-        php_admin_value[error_log] = php://stderr
-        php_admin_flag[log_errors] = on
+
         listen.owner = nginx
         listen.group = nginx
         listen.mode = 0600
@@ -231,6 +233,7 @@ in { pkgs, ... }: {
         pm.min_spare_servers = 5
         pm.max_spare_servers = 20
         pm.max_requests = 500
+        catch_workers_output = yes
       '';
     };
   };
