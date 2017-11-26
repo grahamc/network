@@ -90,7 +90,7 @@ in {
 
   systemd = {
     services =
-      (rustborgservice "build-filter" ./../../ofborg/ofborg/target/debug/build-filter ./../../ofborg/config.prod.json) //
+      (rustborgservice "github-comment-filter" ./../../ofborg/ofborg/target/debug/github-comment-filter ./../../ofborg/config.prod.json) //
       (rustborgservice "builder" ./../../ofborg/ofborg/target/debug/builder ./../../ofborg/config.prod.json) //
       (rustborgservice "mass-rebuilder" ./../../ofborg/ofborg/target/debug/mass-rebuilder ./../../ofborg/config.prod.json) //
 
