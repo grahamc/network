@@ -180,9 +180,9 @@ in { pkgs, ... }: {
         };
 
         "webhook.nix.gsc.io" = defaultVhostCfg // (let
-          src  = pkgs.callPackage ./gcofborgpkg.nix {};
+          src  = import ./gcofborgpkg.nix;
         in {
-          root = "${src}/web";
+          root = "${src.ofborg.php}/web";
           enableACME = true;
           forceSSL = true;
 
@@ -190,7 +190,7 @@ in { pkgs, ... }: {
             rewrite  ^/(\d+)$ index.php?n=$1 last;
           '';
 
-          locations = (vhostPHPLocations pkgs "${src}/web");
+          locations = (vhostPHPLocations pkgs "${src.ofborg.php}/web");
         });
 
         "gsc.io" = defaultVhostCfg // {

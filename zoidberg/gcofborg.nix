@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  src = pkgs.callPackage ./gcofborgpkg.nix {};
+  src = import ./gcofborgpkg.nix;
 
   phpborgservice = name: {
     "grahamcofborg-${name}" = {
@@ -35,7 +35,7 @@ let
         export NIX_PATH=nixpkgs=/run/current-system/nixpkgs;
         git config --global user.email "graham+cofborg@grahamc.com"
         git config --global user.name "GrahamCOfBorg"
-        php ${src}/${name}.php
+        php ${src.ofborg.php}/${name}.php
       '';
     };
   };
@@ -78,6 +78,29 @@ let
       '';
     };
   };
+
+
+  ircservice = name: bin: cfg: {
+    "ircbot-${name}" = {
+      enable = true;
+      after = [ "network.target" "network-online.target" "rabbitmq.service" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        User = "ofborg-irc";
+        Group = "ofborg-irc";
+        PrivateTmp = true;
+        Restart = "always";
+      };
+
+      script = ''
+        export RUST_BACKTRACE=1
+        ${bin} ${cfg}
+      '';
+    };
+  };
+
 in {
   users.users.gc-of-borg = {
     description = "GC Of Borg Workers";
@@ -88,14 +111,35 @@ in {
   };
   users.groups.gc-of-borg.gid = 402;
 
+  users.users.ofborg-irc = {
+    description = "GC Of Borg IRC";
+    home = "/var/empty";
+    group = "ofborg-irc";
+    uid = 403;
+  };
+  users.groups.ofborg-irc.gid = 403;
+
+
   systemd = {
     services =
-      (rustborgservice "github-comment-filter" ./../../ofborg/ofborg/target/debug/github-comment-filter ./../../ofborg/config.prod.json) //
-      (rustborgservice "builder" ./../../ofborg/ofborg/target/debug/builder ./../../ofborg/config.prod.json) //
-      (rustborgservice "mass-rebuilder" ./../../ofborg/ofborg/target/debug/mass-rebuilder ./../../ofborg/config.prod.json) //
+      (rustborgservice "github-comment-filter"
+        "${src.ofborg.rs}/bin/github_comment_filter"
+         ./../../ofborg/config.prod.json) //
+      (rustborgservice "builder"
+        "${src.ofborg.rs}/bin/builder"
+        ./../../ofborg/config.prod.json) //
+
+      (rustborgservice "mass-rebuilder"
+        "${src.ofborg.rs}/bin/mass_rebuilder"
+        ./../../ofborg/config.prod.json) //
 
       (phpborgservice "poster") //
       (phpborgservice "mass-rebuild-filter") //
+
+      (ircservice "gateway"
+        "${src.ircbot}/bin/gateway"
+        ./../../ofborg/config.irc.json) //
+
       {};
   };
 }
