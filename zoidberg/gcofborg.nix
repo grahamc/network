@@ -78,29 +78,6 @@ let
       '';
     };
   };
-
-
-  ircservice = name: bin: cfg: {
-    "ircbot-${name}" = {
-      enable = true;
-      after = [ "network.target" "network-online.target" "rabbitmq.service" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
-
-      serviceConfig = {
-        User = "ofborg-irc";
-        Group = "ofborg-irc";
-        PrivateTmp = true;
-        Restart = "always";
-      };
-
-      script = ''
-        export RUST_BACKTRACE=1
-        ${bin} ${cfg}
-      '';
-    };
-  };
-
 in {
   users.users.gc-of-borg = {
     description = "GC Of Borg Workers";
@@ -110,14 +87,6 @@ in {
     uid = 402;
   };
   users.groups.gc-of-borg.gid = 402;
-
-  users.users.ofborg-irc = {
-    description = "GC Of Borg IRC";
-    home = "/var/empty";
-    group = "ofborg-irc";
-    uid = 403;
-  };
-  users.groups.ofborg-irc.gid = 403;
 
 
   systemd = {
@@ -135,10 +104,6 @@ in {
 
       (phpborgservice "poster") //
       (phpborgservice "mass-rebuild-filter") //
-
-      (ircservice "gateway"
-        "${src.ircbot}/bin/gateway"
-        ./../../ofborg/config.irc.json) //
 
       {};
   };
