@@ -178,9 +178,9 @@ in
     path = pkgs.runCommand "dhcp-pxe-root" {}
       ''
         mkdir $out
-
-      ''; #         ln -s ${netboot} $out/nixos
-              # ln -s ${pkgs.ipxe} $out/ipxe
+        ln -s ${netboot} $out/nixos
+        ln -s ${pkgs.ipxe} $out/ipxe
+      '';
   };
 
 
