@@ -247,7 +247,6 @@ in
     };
   };
 
-
   # Plex
   services.plex = {
     enable = true;
