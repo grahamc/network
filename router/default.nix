@@ -147,6 +147,16 @@ in
 
         next-server 10.5.3.1;
         range 10.5.3.100 10.5.3.200;
+
+        host ndndx-wifi {
+          hardware ethernet 78:31:c1:bc:8a:dc;
+          fixed-address 10.5.3.61;
+        }
+
+        host ndndx-wired {
+          hardware ethernet 98:5a:eb:d5:cc:50;
+          fixed-address 10.5.3.51;
+        }
       }
 
     '';
