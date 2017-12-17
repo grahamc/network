@@ -18,6 +18,9 @@ in
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.forwarding" = 1;
     "net.ipv4.conf.default.forwarding" = 1;
+
+    "net.ipv6.conf.all.forwarding" = true;
+    "net.ipv6.conf.enp8s0.accept_ra" = 2;
   };
 
   # Select internationalisation properties.
@@ -110,6 +113,14 @@ in
         515  # From RT AP
         9100 # From RT AP
       ])
+      ''
+        # allow from trusted interfaces
+        ip46tables -A FORWARD -m state --state NEW -i enp4s0 -o enp8s0 -j ACCEPT
+        # allow traffic with existing state
+        ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+        # block forwarding from external interface
+        ip6tables -A FORWARD -i enp8s0 -j DROP
+      ''
   ];
   networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
 
@@ -128,6 +139,28 @@ in
       "10.5.3.0/24"
     ];
   };
+
+  services.radvd = {
+    enable = true;
+    config = ''
+      interface enp4s0
+      {
+         AdvSendAdvert on;
+         prefix ::/64
+         {
+              AdvOnLink on;
+              AdvAutonomous on;
+         };
+      };
+    '';
+  };
+
+  networking.dhcpcd.extraConfig = ''
+    noipv6rs
+    interface enp8s0
+    ia_na 1
+    ia_pd 2/::/56 enp4s0/1
+  '';
 
   services.dhcpd4 = {
     enable = true;
