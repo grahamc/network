@@ -31,6 +31,10 @@ in {
       firewall = {
         allowedTCPPorts = [ 5671 ];
       };
+
+      extraHosts = ''
+        127.0.0.1 zoidberg
+      '';
     };
 
   security.acme.certs."events.nix.gsc.io" = {
