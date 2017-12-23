@@ -26,6 +26,7 @@ in { pkgs, ... }: {
     ./packet-type-0.nix
     ./gcofborg.nix
     ./ircbot.nix
+    ./prometheus.nix
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {
