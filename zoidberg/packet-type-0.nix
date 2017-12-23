@@ -18,7 +18,7 @@
   };
 
   deployment = {
-    targetHost = "147.75.97.237";
+    targetHost = "2604:1380:0:d00::1";
   };
 
   fileSystems = {
@@ -42,6 +42,8 @@
     hostId = "7a13df42";
     hostName = "zoidberg";
 
+    nameservers = [ "4.2.2.1" "4.2.2.2" "2001:4860:4860::8888" ];
+
     bonds = {
       bond0 = {
         driverOptions.mode = "balance-tlb";
@@ -49,6 +51,16 @@
           "enp0s20f0" "enp0s20f1"
         ];
       };
+    };
+
+    defaultGateway = {
+        address = "147.75.97.236";
+        interface = "bond0";
+    };
+
+    defaultGateway6 = {
+        address = "2604:1380:0:d00::";
+        interface = "bond0";
     };
 
     interfaces = {
