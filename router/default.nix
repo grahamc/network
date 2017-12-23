@@ -227,7 +227,8 @@ in
     enable = true;
     extraConfig = ''
       afp interfaces =  ${lib.concatStringsSep " " internalInterfaces}
-      log level = default:info
+      afp listen 10.5.3.1
+      log level = default:debug
     '';
 
     volumes = {
