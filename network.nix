@@ -7,6 +7,16 @@ in {
     ];
   };
 
+  lord-nibbler = { ... }: {
+    deployment = {
+      targetHost = "10.5.3.133";
+    };
+
+    imports = [
+      (import ./lord-nibbler { inherit secrets; })
+    ];
+  };
+
   router = { ... }: {
     deployment = {
       targetHost = if true then "10.5.3.1" else "67.246.21.246";
