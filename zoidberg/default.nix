@@ -26,7 +26,7 @@ in { pkgs, ... }: {
     ./packet-type-0.nix
     ./gcofborg.nix
     ./ircbot.nix
-    ./prometheus.nix
+    (import ./prometheus.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {
@@ -179,6 +179,14 @@ in { pkgs, ... }: {
           locations."/".extraConfig = ''
             autoindex on;
           '';
+        };
+
+        "monitoring.nix.gsc.io" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+          locations = {
+            "/".proxyPass = "http://127.0.0.1:3000/";
+          };
         };
 
         "webhook.nix.gsc.io" = defaultVhostCfg // (let
