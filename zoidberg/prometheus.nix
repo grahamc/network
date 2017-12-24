@@ -47,14 +47,14 @@
       {
         job_name = "prometheus";
         static_configs = [
-          { targets = [ "localhost:9090" ]; }
+          { targets = [ "zoidberg:9090" ]; }
         ];
       }
 
       {
         job_name = "node";
         static_configs = [
-          { targets = [ "localhost:9100" ]; }
+          { targets = [ "zoidberg:9100" "router:9100" ]; }
         ];
       }
 
@@ -69,13 +69,6 @@
         ];
       }
     ];
-
-    nodeExporter = {
-      enable = true;
-      enabledCollectors = [
-        "bonding" "systemd" "diskstats" "filesystem" "netstat" "meminfo"
-      ];
-    };
 
     alertmanager = {
       enable = true;

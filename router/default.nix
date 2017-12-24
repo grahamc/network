@@ -69,6 +69,15 @@ in
           --dport ${toString port} -j nixos-fw-accept
       '';
 
+    allowPortMonitoring = port:
+      ''
+        iptables -A nixos-fw -p tcp -s 147.75.97.237 \
+          --dport ${toString port} -j nixos-fw-accept
+
+        ip6tables -A nixos-fw -p tcp -s 2604:1380:0:d00::1 \
+          --dport ${toString port} -j nixos-fw-accept
+      '';
+
     privatelyAcceptPort = port:
       lib.concatMapStrings
         (interface: acceptPortOnInterface port interface)
@@ -83,6 +92,10 @@ in
         ${publiclyRejectPort port}
       '';
   in lib.concatStrings [
+    (lib.concatMapStrings allowPortMonitoring
+      [
+        9100 # Prometheus NodeExporter
+      ])
     (lib.concatMapStrings allowPortOnlyPrivately
       [
         80 # nginx for tftp handoff

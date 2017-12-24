@@ -11,9 +11,15 @@ in {
       passwordAuthentication = false;
     };
 
-    networking.firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
+    networking = {
+      extraHosts = ''
+        2604:6000:e6cf:1901::1 router
+      '';
+
+      firewall = {
+        enable = true;
+        allowedTCPPorts = [ 22 ];
+      };
     };
 
     users = {
@@ -59,5 +65,13 @@ in {
       ln -sv ${pkgs.path} $out/nixpkgs
     '';
     environment.etc.host-nix-channel.source = pkgs.path;
+
+    services.prometheus.nodeExporter = {
+      enable = true;
+      enabledCollectors = [
+        "bonding" "systemd" "diskstats" "filesystem" "netstat" "meminfo"
+      ];
+    };
+
   };
 }
