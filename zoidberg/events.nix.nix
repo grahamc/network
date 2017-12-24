@@ -58,6 +58,9 @@ in {
                 sed -i 's/USER/${secrets.rabbitmq.queue_monitor.user}/' ./queue-monitor/stats.php
                 sed -i 's/PASSWORD/${secrets.rabbitmq.queue_monitor.password}/' ./queue-monitor/stats.php
 
+                sed -i 's/USER/${secrets.rabbitmq.queue_monitor.user}/' ./queue-monitor/prometheus.php
+                sed -i 's/PASSWORD/${secrets.rabbitmq.queue_monitor.password}/' ./queue-monitor/prometheus.php
+
                 cp -r ./queue-monitor $out
               '';
           in vhostPHPLocations pkgs src;
