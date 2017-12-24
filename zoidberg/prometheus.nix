@@ -12,11 +12,33 @@
     rules = [
       ''
         ALERT StalledEvaluator
-        IF (ofborg_queue_evaluator_waiting - ofborg_queue_evaluator_in_progress) >= ofborg_queue_evaluator_waiting
+        IF ofborg_queue_evaluator_waiting > 0 and ofborg_queue_evaluator_in_progress == 0
         FOR 5m
         LABELS {
           severity="page"
         }
+
+        ALERT StalledBuilder
+        IF ofborg_queue_builder_waiting > 0 and ofborg_queue_builder_in_progress == 0
+        FOR 5m
+        LABELS {
+          severity="page"
+        }
+
+        ALERT FreeInodes4HrsAway
+        IF predict_linear(node_filesystem_files_free{mountpoint="/"}[1h], 4   * 3600) <= 0
+        FOR 5m
+        LABELS {
+          severity="page"
+        }
+
+        ALERT FreeSpace4HrsAway
+        IF predict_linear(node_filesystem_free{mountpoint="/"}[1h], 4 * 3600) <= 0
+        FOR 5m
+        LABELS {
+          severity="page"
+        }
+
       ''
     ];
 
