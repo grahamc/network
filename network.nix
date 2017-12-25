@@ -17,13 +17,13 @@ in {
     ];
   };
 
-  router = { ... }: {
+  ogden = { ... }: {
     deployment = {
       targetHost = "10.5.3.105"; # if true then "10.5.3.1" else "67.246.21.246";
     };
 
     imports = [
-      (import ./router { inherit secrets; })
+      (import ./ogden { inherit secrets; })
     ];
   };
 }
