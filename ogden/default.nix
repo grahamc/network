@@ -25,6 +25,13 @@ in
     screen
   ];
 
+  services.ofborg = {
+    enable = true;
+    enable_evaluator = true;
+    enable_builder = true;
+  };
+
+
   services.netatalk = {
     enable = true;
     extraConfig = ''

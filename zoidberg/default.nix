@@ -114,8 +114,6 @@ in { pkgs, ... }: {
     ofborg = {
       enable = true;
       enable_administrative = true;
-      enable_evaluator = true;
-      enable_builder = true;
     };
 
     fail2ban = {
