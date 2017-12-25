@@ -43,7 +43,7 @@ let
     };
   };
 
-  rustborgservice = name: bin: cfg: {
+  rustborgservice = name: bin: conf: {
     "grahamcofborg-${name}" = {
       enable = true;
       after = [ "network.target" "network-online.target" "rabbitmq.service" ];
@@ -76,10 +76,23 @@ let
         git config --global user.email "graham+cofborg@grahamc.com"
         git config --global user.name "GrahamCOfBorg"
         export RUST_BACKTRACE=1
-        ${bin} ${cfg}
+        ${bin} ${conf}
       '';
     };
   };
+
+  ifAdministrative = service: if cfg.enable_administrative
+    then service
+    else {};
+
+  ifEvaluator = service: if cfg.enable_evaluator
+    then service
+    else {};
+
+  ifBuilder = service: if cfg.enable_builder
+    then service
+    else {};
+
 in {
   options = {
     services.ofborg = {
@@ -88,6 +101,20 @@ in {
         default = false;
       };
 
+      enable_administrative = mkOption {
+        type = types.bool;
+        default = false;
+      };
+
+      enable_evaluator = mkOption {
+        type = types.bool;
+        default = false;
+      };
+
+      enable_builder = mkOption {
+        type = types.bool;
+        default = false;
+      };
     };
   };
 
@@ -104,19 +131,19 @@ in {
 
     systemd = {
       services =
-        (rustborgservice "github-comment-filter"
-          "${src.ofborg.rs}/bin/github_comment_filter"
-           ./../../ofborg/config.prod.json) //
-        (rustborgservice "builder"
+        (ifBuilder (rustborgservice "builder"
           "${src.ofborg.rs}/bin/builder"
-          ./../../ofborg/config.prod.json) //
+          ./../../ofborg/config.prod.json)) //
 
-        (rustborgservice "mass-rebuilder"
+        (ifEvaluator (rustborgservice "mass-rebuilder"
           "${src.ofborg.rs}/bin/mass_rebuilder"
-          ./../../ofborg/config.prod.json) //
+          ./../../ofborg/config.prod.json)) //
 
-        (phpborgservice "poster") //
-        (phpborgservice "mass-rebuild-filter") //
+        (ifAdministrative (rustborgservice "github-comment-filter"
+          "${src.ofborg.rs}/bin/github_comment_filter"
+           ./../../ofborg/config.prod.json)) //
+        (ifAdministrative (phpborgservice "poster")) //
+        (ifAdministrative (phpborgservice "mass-rebuild-filter")) //
 
         {};
     };
