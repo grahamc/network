@@ -8,6 +8,8 @@ in
     ./hardware.nix
   ];
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   # Select internationalisation properties.
   i18n = {
     consoleFont = "Lat2-Terminus16";
