@@ -66,9 +66,28 @@ in
     };
   };
 
+  services.prometheus.nodeExporter.listenAddress = "[::]";
+
   services.fail2ban = {
     enable = true;
   };
+
+  networking.firewall.extraCommands = let
+    allowPortMonitoring = port:
+      ''
+        iptables -A nixos-fw -p tcp -s 147.75.97.237 \
+          --dport ${toString port} -j nixos-fw-accept
+
+        ip6tables -A nixos-fw -p tcp -s 2604:1380:0:d00::1 \
+          --dport ${toString port} -j nixos-fw-accept
+      '';
+  in lib.concatStrings [
+    (lib.concatMapStrings allowPortMonitoring
+      [
+        # 9100 # Prometheus NodeExporter
+      ])
+  ];
+  networking.firewall.allowedTCPPorts = [ 9100 ];
 
   users = {
     extraUsers = {

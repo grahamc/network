@@ -68,11 +68,25 @@ in {
         ${privatelyAcceptPort port}
         ${publiclyRejectPort port}
       '';
+
+    # IPv6 flat forwarding. For ipv4, see nat.forwardPorts
+    forwardPortToHost = port: interface: proto: host:
+      ''
+        ip6tables -A FORWARD -i ${interface} \
+          -p ${proto} -d ${host} \
+          --dport ${toString port} -j ACCEPT
+      '';
   in lib.concatStrings [
     (lib.concatMapStrings allowPortMonitoring
       [
         9100 # Prometheus NodeExporter
       ])
+    #(forwardPortToHost 9100 externalInterface "tcp"
+    #  "2604:6000:e6c2:f501:8e89:a5ff:fe10:53f0/128") # ogden
+    ''
+      ip6tables -A FORWARD -i ${externalInterface} -o ${internalWiredInterface} -p tcp --dport 9100 -j ACCEPT
+    ''
+
     (lib.concatMapStrings allowPortOnlyPrivately
       [
         80 # nginx for tftp handoff
@@ -101,10 +115,12 @@ in {
         143  # Common from public internet
         139  # From RT AP
         515  # From RT AP
-        9100 # From RT AP
+        # 9100 # From RT AP
       ])
       ''
         # allow from trusted interfaces
+
+        ip46tables -A FORWARD -i ${externalInterface} -o ${internalWiredInterface} -p tcp --dport 9100 -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${internalWiredInterface} -o ${externalInterface} -j ACCEPT
         # allow traffic with existing state
         ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT

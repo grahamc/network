@@ -54,7 +54,7 @@
       {
         job_name = "node";
         static_configs = [
-          { targets = [ "zoidberg:9100" "router:9100" ]; }
+          { targets = [ "zoidberg:9100" "ogden:9100" ]; }
         ];
       }
 
