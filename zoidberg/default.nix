@@ -24,7 +24,6 @@ let
 in { pkgs, ... }: {
   imports = [
     ./packet-type-0.nix
-    # ./gcofborg.nix
     ./ircbot.nix
     (import ./prometheus.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
