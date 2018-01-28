@@ -142,6 +142,9 @@ in {
         (ifAdministrative (rustborgservice "github-comment-filter"
           "${src.ofborg.rs}/bin/github_comment_filter"
            ./../../ofborg/config.prod.json)) //
+        (ifAdministrative (rustborgservice "log-message-collector"
+          "${src.ofborg.rs}/bin/log_message_collector"
+           ./../../ofborg/config.prod.json)) //
         (ifAdministrative (phpborgservice "poster")) //
         (ifAdministrative (phpborgservice "mass-rebuild-filter")) //
 

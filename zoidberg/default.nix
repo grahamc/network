@@ -88,6 +88,46 @@ in { pkgs, ... }: {
         };
       };
     }
+
+    {
+      systemd = {
+        services = {
+          prune-ofborg-logs = {
+            path = with pkgs; [
+            ];
+
+            serviceConfig = {
+              User = "gc-of-borg";
+              Group = "gc-of-borg";
+              Type = "oneshot";
+              PrivateTmp = true;
+              WorkingDirectory = "/var/lib/nginx/ofborg/logs/";
+            };
+
+            script = ''
+              find /var/lib/nginx/ofborg/logs/ -type f -mtime +7 -delete
+              find /var/lib/nginx/ofborg/logs/ -mindepth 1 -type d -empty -mtime +7 -delete
+            '';
+          };
+        };
+
+        timers = {
+          prune-ofborg-logs = {
+            description = "Prune OfBorg logs";
+            wantedBy = [ "timers.target" ];
+            partOf = [ "prune-ofborg-logs.service" ];
+            enable = true;
+            timerConfig = {
+              OnCalendar = "*:0/25";
+              Unit = "prune-ofborg-logs.service";
+              Persistent = "yes";
+              AccuracySec = "1m";
+              RandomizedDelaySec = "30s";
+            };
+          };
+        };
+      };
+    }
   ];
 
   networking = {
@@ -275,6 +315,10 @@ in { pkgs, ... }: {
 
           mkdir -p /var/lib/nginx
           chown nginx:nginx /var/lib/nginx
+
+          mkdir -p /var/lib/nginx/ofborg/logs
+          chown nginx:nginx /var/lib/nginx/ofborg
+          chown gc-of-borg:gc-of-borg /var/lib/nginx/ofborg/logs
 
           mkdir -p /var/lib/nginx/grahamc/gsc.io/public
           chown nginx:nginx /var/lib/nginx/grahamc/
