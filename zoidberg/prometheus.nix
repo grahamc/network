@@ -11,6 +11,13 @@
     alertmanagerURL = [ "http://127.0.0.1:9093" ];
     rules = [
       ''
+        ALERT MissingOfBorgData
+        IF absent(ofborg_queue_builder_waiting) == 1
+        FOR 5m
+        LABELS {
+          severity="page"
+        }
+
         ALERT StalledEvaluator
         IF ofborg_queue_evaluator_waiting > 0 and ofborg_queue_evaluator_in_progress == 0
         FOR 5m

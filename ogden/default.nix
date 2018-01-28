@@ -8,6 +8,19 @@ in
     ./hardware.nix
   ];
 
+  nix = {
+      gc = {
+        automatic = true;
+        dates = "8:44";
+
+        options = let
+          freedGb = 300;
+        in ''--max-freed "$((${toString freedGb} * 1024**3 - 1024 * $(df -P -k /nix/store | tail -n 1 | ${pkgs.gawk}/bin/awk '{ print $4 }')))"'';
+      };
+
+   };
+
+
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Select internationalisation properties.
