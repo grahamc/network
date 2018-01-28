@@ -25,6 +25,7 @@ in
   environment.systemPackages = with pkgs; [
     emacs
     screen
+    git # for kyle's git hosting
   ];
 
   services.ofborg = {
@@ -89,7 +90,18 @@ in
         # 9100 # Prometheus NodeExporter
       ])
   ];
-  networking.firewall.allowedTCPPorts = [ 9100 ];
+
+  networking.firewall.allowedTCPPorts = [
+    # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
+    32400 3005 8324 32469
+    9100 # Prometheus NodeExporter
+  ];
+
+  networking.firewall.allowedUDPPorts = [
+    # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
+    1900 5353 32410 32412 32413 32414 # UDP
+  ];
+
 
   users = {
     extraUsers = {
@@ -109,6 +121,7 @@ in
         openssh.authorizedKeys.keyFiles = [
           secrets.kchristensen.keys
         ];
+        hashedPassword = secrets.kchristensen.password;
       };
     };
   };

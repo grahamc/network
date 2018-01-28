@@ -16,7 +16,6 @@ in {
     "net.ipv6.conf.${externalInterface}.accept_ra" = 2;
   };
 
-
   # Basically, we want to allow some ports only locally and refuse
   # them externally.
   #
@@ -106,7 +105,7 @@ in {
         10001 # UDP port used for device discovery.
 
         # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
-        32400 3005 8324 32469 # TCP
+        3005 8324 32469 # TCP, 32400 is allowed on all interfaces
         1900 5353 32410 32412 32413 32414 # UDP
       ])
     (lib.concatMapStrings dropPortNoLog
@@ -129,7 +128,7 @@ in {
       ''
   ];
   networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
-
+  networking.firewall.allowPing = true;
   networking.interfaces."${internalWiredInterface}" = {
     ip4 = [{
       address = "${firstoctets}.1";
@@ -143,6 +142,11 @@ in {
     internalInterfaces = internalInterfaces;
     internalIPs = [
       "${firstoctets}.0/24"
+    ];
+
+    forwardPorts = [
+      { destination = "10.5.3.105:32400"; proto = "tcp"; sourcePort = 32400; }
+      { destination = "10.5.3.105:22"; proto = "tcp"; sourcePort = 22; }
     ];
   };
 
@@ -196,6 +200,12 @@ in {
         host ndndx-wired {
           hardware ethernet 98:5a:eb:d5:cc:50;
           fixed-address ${firstoctets}.51;
+        }
+
+
+        host odroid-c2-wired-bootp {
+          hardware ethernet 00:1e:06:33:1c:28;
+          fixed-address ${firstoctets}.11;
         }
       }
 

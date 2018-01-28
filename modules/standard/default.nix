@@ -46,6 +46,7 @@ in {
 
     nix = {
       useSandbox = true;
+
       nixPath = [
         # Ruin the config so we don't accidentally run
         # nixos-rebuild switch on the host
