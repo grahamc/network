@@ -26,6 +26,7 @@ let
         PrivateTmp = true;
         WorkingDirectory = "/var/lib/gc-of-borg";
         Restart = "always";
+        RestartSec = "10s";
       };
 
       preStart = ''
@@ -63,6 +64,7 @@ let
         PrivateTmp = true;
         WorkingDirectory = "/var/lib/gc-of-borg";
         Restart = "always";
+        RestartSec = "10s";
       };
 
       preStart = ''
