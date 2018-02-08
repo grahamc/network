@@ -7,6 +7,16 @@ dbg() {
     echo "$@" >&2
 }
 
+publish() {
+    msg=$(cat | head -n1)
+    curl -v  \
+         -H "content-type:application/json" \
+         -XPOST \
+         AMQPAPI/api/exchanges/ircbot/amq.default/publish \
+         --data '{"properties": {}, "routing_key": "queue-publish", "payload_encoding":"string", "payload": "{\"target\": \"#nixos\", \"body\": \"'"$msg"'\"}"}'
+
+}
+
 filter_recent_timestamps() {
     since=$(date -d "3 months ago" "+%s")
     while read commit timestamp; do
@@ -84,9 +94,6 @@ readonly dest="$2"
 ) | grep -v HEAD |
     (
         cd "$dest"
-        touch summary
-        echo -n "" > summary
-        summary="$(pwd)/summary"
         while read -r branch; do
             name=$(echo "$branch" | sed -e "s#/#_#g" -e "s#\.\.#_#g")
             mkdir -p "$name"
@@ -103,7 +110,7 @@ readonly dest="$2"
                         cd "$gitrepo" >&2
                         echo -n "Channel $branch advanced to "
                         git show -s --format="https://github.com/NixOS/nixpkgs/commit/%h (from %cr, history: $URL/$name)" "$remote/$branch"
-                    ) >> "$summary"
+                    ) | publish
                     mv latest.next latest
                     chmod a+r latest
                     touch history
@@ -144,24 +151,6 @@ readonly dest="$2"
 EOF
             )
         done
-
-        if [ $(wc -l "$summary" | cut -d' ' -f1) -gt 0 ]; then
-            (
-                sleep 5
-                echo 'NICK nix-gsc-io`bot'
-                sleep 2
-                echo 'USER nix-gsc-io`bot 0 * :Nix Channel Bot by gchristensen'
-                sleep 2
-                echo "JOIN :$CHAN"
-                sleep 10
-                cat "$summary" | sed -e "s/^/NOTICE $CHAN :/"
-                sleep 3
-                echo "QUIT :Info at $URL"
-                sleep 5
-            ) | telnet irc.freenode.net 6667 || true
-        fi
-
-        rm -f summary
 
         make_graph > graph.html
     )

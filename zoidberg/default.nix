@@ -65,8 +65,16 @@ in { pkgs, ... }: {
               mkdir -p /var/lib/nix-channel-monitor/webroot
             '';
 
-            script = ''
-              ${./nix-channel-monitor/changes.sh} /var/lib/nix-channel-monitor/git /var/lib/nix-channel-monitor/monitor/public
+            script = let
+              src = pkgs.runCommand "queue-monitor-src" {}
+              ''
+                mkdir queue-monitor
+                cp ${./nix-channel-monitor/changes.sh} ./changes.sh
+                sed -i 's#AMQPAPI#${secrets.rabbitmq.nixchannelmonitor}#' ./changes.sh
+                cp -r ./changes.sh $out
+              '';
+          in ''
+              ${src} /var/lib/nix-channel-monitor/git /var/lib/nix-channel-monitor/monitor/public
             '';
           };
         };
