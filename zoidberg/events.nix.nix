@@ -123,7 +123,7 @@ in {
              {tcp_listen_options, [
                      {keepalive, true}]},
              {heartbeat, 10},
-             {ssl_listeners, [{"0.0.0.0", 5671}]},
+             {ssl_listeners, [{"::", 5671}]},
              {ssl_options, [
                             {cacertfile,"${cert_dir}/fullchain.pem"},
                             {certfile,"${cert_dir}/cert.pem"},
