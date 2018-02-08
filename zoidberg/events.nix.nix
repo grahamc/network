@@ -144,9 +144,4 @@ in {
       '';
     };
   };
-
-  # Delete after September 24 2017
-  systemd.services.rabbitmq.environment.RABBITMQ_LOGS = "-";
-  systemd.services.rabbitmq.environment.RABBITMQ_SASL_LOGS = "-";
-  systemd.services.rabbitmq.environment.RABBITMQ_SERVER_START_ARGS = "";
 }
