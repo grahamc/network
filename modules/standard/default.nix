@@ -15,6 +15,7 @@ in {
       extraHosts = ''
         # 2604:6000:e6cf:1901::1 lord-nibbler
         2604:6000:e6c2:f501:8e89:a5ff:fe10:53f0 ogden
+        195.201.26.67 ofborg-evaluator-0
       '';
 
       firewall = {
