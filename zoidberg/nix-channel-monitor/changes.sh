@@ -13,7 +13,14 @@ publish() {
          -H "content-type:application/json" \
          -XPOST \
          AMQPAPI/api/exchanges/ircbot/amq.default/publish \
-         --data '{"properties": {}, "routing_key": "queue-publish", "payload_encoding":"string", "payload": "{\"target\": \"#nixos\", \"body\": \"'"$msg"'\"}"}'
+         --data @- <<-EOF
+{
+    "properties": {},
+    "routing_key": "queue-publish",
+    "payload_encoding": "string",
+    "payload": "{\"target\": \"#nixos\", \"body\": \"'"$msg"'\", \"message_type\": \"notice\"}"
+}
+EOF
 
 }
 
