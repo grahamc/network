@@ -256,12 +256,6 @@ in { pkgs, ... }: {
           locations = (vhostPHPLocations pkgs "${src.ofborg.php}/web");
         });
 
-        "nix.ci" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          root = ./nix.ci;
-        };
-
         "gsc.io" = defaultVhostCfg // {
           #enableACME = true;
           #forceSSL = true;
