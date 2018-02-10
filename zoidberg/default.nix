@@ -46,6 +46,7 @@ in { pkgs, ... }: {
               telnet
               git
               gawk
+              curl
             ];
 
             serviceConfig = {
