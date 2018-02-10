@@ -26,6 +26,12 @@
         "NixOS-nix-idea": {
             "url": "https://github.com/NixOS/nix-idea.git"
         },
+        "NixOS-nix-mode": {
+            "url": "https://github.com/NixOS/nix-mode.git"
+        },
+        "NixOS-nix-pills": {
+            "url": "https://github.com/NixOS/nix-pills.git"
+        },
         "NixOS-nixcon": {
             "url": "https://github.com/NixOS/nixcon.git"
         },
@@ -59,6 +65,9 @@
         "NixOS-npm2nix": {
             "url": "https://github.com/NixOS/npm2nix.git"
         },
+        "NixOS-ofborg": {
+            "url": "https://github.com/NixOS/ofborg.git"
+        },
         "NixOS-patchelf": {
             "url": "https://github.com/NixOS/patchelf.git"
         },
@@ -67,6 +76,9 @@
         },
         "NixOS-security": {
             "url": "https://github.com/NixOS/security.git"
+        },
+        "NixOS-security-advisories": {
+            "url": "https://github.com/NixOS/security-advisories.git"
         },
         "nixos-users-wiki-wiki": {
             "url": "https://github.com/nixos-users/wiki.wiki.git",

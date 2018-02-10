@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i python3 -p python34Packages.python -p python34Packages.requests2
+#!nix-shell -i python3 -p python34Packages.python -p python34Packages.requests
 
 import requests
 import json
@@ -14,13 +14,25 @@ blacklist = [
 ];
 
 def all_for_org(org, blacklist):
-    repos = requests.get('https://api.github.com/orgs/{}/repos'.format(org)).json()
 
-    resp = {
-        "{}-{}".format(org, repo['name']): { "url": repo['clone_url'] }
-        for repo in repos
-        if repo['clone_url'] not in blacklist
-    }
+    resp = {}
+
+    next_url = 'https://api.github.com/orgs/{}/repos'.format(org)
+    while next_url is not None:
+        repo_resp = requests.get(next_url)
+
+        if 'next' in repo_resp.links:
+            next_url = repo_resp.links['next']['url']
+        else:
+            next_url = None
+
+        repos = repo_resp.json()
+
+        resp.update({
+            "{}-{}".format(org, repo['name']): { "url": repo['clone_url'] }
+            for repo in repos
+            if repo['clone_url'] not in blacklist
+        })
 
     return resp
 
