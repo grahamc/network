@@ -18,7 +18,7 @@ publish() {
     "properties": {},
     "routing_key": "queue-publish",
     "payload_encoding": "string",
-    "payload": "{\"target\": \"#nixos\", \"body\": \"'"$msg"'\", \"message_type\": \"notice\"}"
+    "payload": "{\"target\": \"#nixos\", \"body\": \"$msg\", \"message_type\": \"notice\"}"
 }
 EOF
 
