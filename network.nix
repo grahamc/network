@@ -26,15 +26,4 @@ in {
       (import ./ogden { inherit secrets; })
     ];
   };
-
-
-  ofborg-evaluator-0 = { ... }: {
-    deployment = {
-      targetHost = "195.201.26.67";
-    };
-
-    imports = [
-      (import ./ofborg-evaluator-0 { inherit secrets; })
-    ];
-  };
 }

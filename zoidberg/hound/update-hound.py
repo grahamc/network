@@ -11,6 +11,7 @@ blacklist = [
     'https://github.com/NixOS/nixpkgs-channels.git',
     'https://github.com/NixOS/nixops-dashboard.git',
     'https://github.com/NixOS/nixos-foundation.git',
+    'https://github.com/NixOS/ofborg.git',
 ];
 
 def all_for_org(org, blacklist):

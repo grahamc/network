@@ -65,9 +65,6 @@
         "NixOS-npm2nix": {
             "url": "https://github.com/NixOS/npm2nix.git"
         },
-        "NixOS-ofborg": {
-            "url": "https://github.com/NixOS/ofborg.git"
-        },
         "NixOS-patchelf": {
             "url": "https://github.com/NixOS/patchelf.git"
         },

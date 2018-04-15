@@ -18,7 +18,7 @@ in { pkgs, ... }: {
     nix = {
       gc = {
         automatic = true;
-        dates = "8:44";
+        dates = "*:0/15";
 
         options = let
           freedGb = 60;

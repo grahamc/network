@@ -25,6 +25,13 @@
           severity="page"
         }
 
+        ALERT BrokenEvaluator
+        IF (ofborg_queue_evaluator_waiting > 0 or ofborg_queue_evaluator_in_progress > 0) and changes(ofborg_task_evaluation_check_complete[1h]) == 0
+        FOR 30m
+        LABELS {
+          severity="page"
+        }
+
         ALERT StalledBuilder
         IF ofborg_queue_builder_waiting > 0 and ofborg_queue_builder_in_progress == 0
         FOR 5m
@@ -60,6 +67,7 @@
 
       {
         job_name = "ofborg-workers";
+        honor_labels = true;
         static_configs = [
           { targets = [ "zoidberg:9898" ]; }
         ];
@@ -68,7 +76,9 @@
       {
         job_name = "node";
         static_configs = [
-          { targets = [ "zoidberg:9100" "ogden:9100" "ofborg-evaluator-0:9100" ]; }
+          { targets = [ "zoidberg:9100" "ogden:9100"
+             # "evaluator-0:9100" "evaluator-1:9100" "evaluator-2:9100" "evaluator-3:9100" "evaluator-4:9100"
+           ]; }
         ];
       }
 

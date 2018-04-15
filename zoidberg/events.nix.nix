@@ -5,51 +5,6 @@ let
   rabbit_tls_port = 5671;
   cert_dir = "${config.security.acme.directory}/events.nix.gsc.io";
 
-  logsnginxcfcg = defaultVhostCfg // {
-          root = "${logviewer}";
-          enableACME = true;
-          forceSSL = true;
-
-          locations = {
-            "/logfile" = {
-              alias = "/var/lib/nginx/ofborg/logs";
-              extraConfig = ''
-                add_header Access-Control-Allow-Origin "*";
-                add_header Access-Control-Request-Method "GET";
-                add_header Content-Security-Policy "default-src 'none'; sandbox;";
-                add_header Content-Type "text/plain; charset=utf-8";
-                add_header X-Content-Type-Options "nosniff";
-                add_header X-Frame-Options "deny";
-                add_header X-XSS-Protection "1; mode=block";
-              '';
-            };
-
-            "/logs" = {
-              alias = ../../ofborg/log-api;
-              extraConfig = ''
-                add_header Access-Control-Allow-Origin "*";
-                add_header Access-Control-Request-Method "GET";
-                add_header Content-Security-Policy "default-src 'none'; sandbox;";
-                add_header X-Content-Type-Options "nosniff";
-                add_header X-XSS-Protection "1; mode=block";
-
-                fastcgi_split_path_info ^(.+\.php)(/.+)$;
-                fastcgi_pass unix:/run/php-fpm.sock;
-                fastcgi_index index.php;
-                fastcgi_param SCRIPT_FILENAME ${../../ofborg/log-api}/index.php;
-                include ${pkgs.nginx}/conf/fastcgi_params;
-                try_files /index.php =404;
-              '';
-            };
-          };
-        };
-
-  logviewer = let
-    src = import ../../logger-wip/release.nix { inherit pkgs; };
-  in pkgs.runCommand "logviewer-site-only" {} ''
-    cp -r ${src}/website $out
-  '';
-
   vhostPHPLocations = pkgs: root: {
     "/" = {
       index = "index.php index.html";
@@ -91,42 +46,27 @@ in {
   services = {
     nginx = {
       virtualHosts = {
+        "events.nix.gsc.io" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+        };
 
         "nix.ci" = defaultVhostCfg // {
           enableACME = true;
           forceSSL = true;
           root = ./nix.ci;
+          locations = {
+            "/status".proxyPass = "http://127.0.0.1:9090/alerts";
+            "/static".proxyPass = "http://127.0.0.1:9090/static";
+          };
         };
-
-        "events.nix.gsc.io" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-
-          locations = let
-            src = pkgs.runCommand "queue-monitor-src" {}
-              ''
-                mkdir queue-monitor
-                cp ${./queue-monitor}/* ./queue-monitor # */
-                sed -i 's/USER/${secrets.rabbitmq.queue_monitor.user}/' ./queue-monitor/stats.php
-                sed -i 's/PASSWORD/${secrets.rabbitmq.queue_monitor.password}/' ./queue-monitor/stats.php
-
-                sed -i 's/USER/${secrets.rabbitmq.queue_monitor.user}/' ./queue-monitor/prometheus.php
-                sed -i 's/PASSWORD/${secrets.rabbitmq.queue_monitor.password}/' ./queue-monitor/prometheus.php
-
-                cp -r ./queue-monitor $out
-              '';
-          in vhostPHPLocations pkgs src;
-        };
-
-        "logs.nix.gsc.io" = logsnginxcfcg;
-        "logs.nix.ci" = logsnginxcfcg;
       };
     };
 
     rabbitmq = {
       enable = true;
       cookie = secrets.rabbitmq.cookie;
-      plugins = [ "rabbitmq_management" "rabbitmq_web_stomp" ];
+      plugins = [ "rabbitmq_management" "rabbitmq_web_stomp" "rabbitmq_shovel" "rabbitmq_shovel_management" ];
       config = ''
         [
           {rabbit, [
