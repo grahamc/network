@@ -147,13 +147,13 @@ in lib.concatStrings [
   networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
   networking.firewall.allowPing = true;
   networking.interfaces."${internalWiredInterface}" = {
-    ip4 = [{
+    ipv4.addresses = [{
       address = "${firstoctets}.1";
       prefixLength = 24;
     }];
   };
   networking.interfaces."${internalSegregatedInterface}" = {
-    ip4 = [{
+    ipv4.addresses = [{
       address = "${segregatedFirstoctets}.1";
       prefixLength = 24;
     }];
