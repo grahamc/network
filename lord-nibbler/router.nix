@@ -4,9 +4,13 @@ let
   externalInterface = "enp1s0";
   internalWiredInterface = "enp2s0";
 
+
   internalInterfaces = [ internalWiredInterface ];
 
   firstoctets = "10.5.3";
+
+  internalSegregatedInterface = "enp3s0";
+  segregatedFirstoctets = "10.99.99";
 in {
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.forwarding" = 1;
@@ -36,7 +40,16 @@ in {
           --dport ${toString port} -j nixos-fw-log-refuse
         ip46tables -A nixos-fw -i ${interface} -p udp \
           --dport ${toString port} -j nixos-fw-log-refuse
+        '';
+
+    refusePortOnInterfaceHighPriority = port: interface:
+      ''
+        ip46tables -I nixos-fw -i ${interface} -p tcp \
+          --dport ${toString port} -j nixos-fw-log-refuse
+        ip46tables -I nixos-fw -i ${interface} -p udp \
+          --dport ${toString port} -j nixos-fw-log-refuse
       '';
+
     acceptPortOnInterface = port: interface:
       ''
         ip46tables -A nixos-fw -i ${interface} -p tcp \
@@ -75,7 +88,8 @@ in {
           -p ${proto} -d ${host} \
           --dport ${toString port} -j ACCEPT
       '';
-  in lib.concatStrings [
+in lib.concatStrings [
+    (refusePortOnInterfaceHighPriority 22 internalSegregatedInterface)
     (lib.concatMapStrings allowPortMonitoring
       [
         9100 # Prometheus NodeExporter
@@ -117,10 +131,13 @@ in {
         # 9100 # From RT AP
       ])
       ''
-        # allow from trusted interfaces
+        # Don't allow segregated nodes to talk to the squishy nodes
+        ip46tables -I FORWARD -i ${internalWiredInterface} -o ${internalSegregatedInterface} -j DROP
+        ip46tables -I FORWARD -i ${internalSegregatedInterface} -o ${internalWiredInterface} -j DROP
 
-        ip46tables -A FORWARD -i ${externalInterface} -o ${internalWiredInterface} -p tcp --dport 9100 -j ACCEPT
+        # allow from trusted interfaces
         ip46tables -A FORWARD -m state --state NEW -i ${internalWiredInterface} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${internalSegregatedInterface} -o ${externalInterface} -j ACCEPT
         # allow traffic with existing state
         ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
         # block forwarding from external interface
@@ -135,13 +152,19 @@ in {
       prefixLength = 24;
     }];
   };
+  networking.interfaces."${internalSegregatedInterface}" = {
+    ip4 = [{
+      address = "${segregatedFirstoctets}.1";
+      prefixLength = 24;
+    }];
+  };
 
   networking.nat = {
     enable = true;
     externalInterface = externalInterface;
-    internalInterfaces = internalInterfaces;
+    internalInterfaces = internalInterfaces ++ [internalSegregatedInterface];
     internalIPs = [
-      "${firstoctets}.0/24"
+      "${firstoctets}.0/24" "${segregatedFirstoctets}.0/24"
     ];
 
     forwardPorts = [
@@ -175,14 +198,14 @@ in {
 
   services.dhcpd4 = {
     enable = true;
-    interfaces = internalInterfaces;
+    interfaces = internalInterfaces ++ [internalSegregatedInterface];
     extraConfig = ''
-      option subnet-mask 255.255.255.0;
-      option broadcast-address ${firstoctets}.255;
-      option routers ${firstoctets}.1;
-      option domain-name-servers 8.8.8.8;
-      option domain-name "${secrets.router.domainname}";
       subnet ${firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${firstoctets}.255;
+        option routers ${firstoctets}.1;
+        option domain-name-servers ${firstoctets}.1;
+        option domain-name "${secrets.router.domainname}";
         if exists user-class and option user-class = "iPXE" {
           filename "http://${firstoctets}.1/nixos/netboot.ipxe";
         } else {
@@ -202,13 +225,19 @@ in {
           fixed-address ${firstoctets}.51;
         }
 
-
         host odroid-c2-wired-bootp {
           hardware ethernet 00:1e:06:33:1c:28;
           fixed-address ${firstoctets}.11;
         }
       }
 
+      subnet ${segregatedFirstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${segregatedFirstoctets}.255;
+        option routers ${segregatedFirstoctets}.1;
+        option domain-name-servers 8.8.8.8;
+        range ${segregatedFirstoctets}.100 ${segregatedFirstoctets}.200;
+      }
     '';
   };
 
