@@ -99,9 +99,9 @@ in lib.concatStrings [
     ''
       ip6tables -A FORWARD -i ${externalInterface} -o ${internalWiredInterface} -p tcp --dport 9100 -j ACCEPT
     ''
-
     (lib.concatMapStrings allowPortOnlyPrivately
-      [
+    [
+        53 # knot dns resolver
         80 # nginx for tftp handoff
         69 # tftp
         config.services.netatalk.port
@@ -157,6 +157,31 @@ in lib.concatStrings [
       address = "${segregatedFirstoctets}.1";
       prefixLength = 24;
     }];
+  };
+
+  services.kresd = {
+    enable = true;
+    interfaces = [ "::1" "127.0.0.1" "${firstoctets}.1" ];
+    extraConfig = if true then ''
+      modules = {
+      	'policy',   -- Block queries to local zones/bad sites
+      	'stats',    -- Track internal statistics
+      	'predict',  -- Prefetch expiring/frequent records
+      }
+
+      -- Smaller cache size
+      cache.size = 10 * MB
+    '' else ''
+      modules = {
+        http = {
+                host = 'localhost',
+                port = 8053,
+                -- geoip = 'GeoLite2-City.mmdb' -- Optional, see
+                -- e.g. https://dev.maxmind.com/geoip/geoip2/geolite2/
+                -- and install mmdblua library
+        }
+      }
+    '';
   };
 
   networking.nat = {
