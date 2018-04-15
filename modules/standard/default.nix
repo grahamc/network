@@ -85,10 +85,10 @@ in {
     '';
     environment.etc.host-nix-channel.source = pkgs.path;
 
-    services.prometheus.nodeExporter = {
+    services.prometheus.exporters.node = {
       enable = true;
       enabledCollectors = [
-        # "cpu" # broken?
+        "cpu" # broken?
         "bonding" "systemd" "diskstats" "filesystem" "netstat" "meminfo"
         "textfile"
       ];
@@ -110,15 +110,5 @@ in {
       )
 
     '';
-
-    # Ugh, delete this garbage!
-    systemd.services.prometheus-node-exporter.script = lib.mkForce (let
-        cfg = config.services.prometheus.nodeExporter;
-      in ''
-        exec ${pkgs.prometheus-node-exporter}/bin/node_exporter \
-          ${lib.concatMapStringsSep " " (x: "--collector." + x) cfg.enabledCollectors} \
-          --web.listen-address ${cfg.listenAddress}:${toString cfg.port} \
-          ${lib.concatStringsSep " \\\n  " cfg.extraFlags}
-      '');
   };
 }

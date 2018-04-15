@@ -36,10 +36,11 @@ in
     emacs
     screen
     git # for kyle's git hosting
+    borgbackup # for my backups from morbo
   ];
 
   services.ofborg = {
-    enable = true;
+    enable = false;
     enable_evaluator = true;
     enable_builder = true;
   };
@@ -102,6 +103,14 @@ in
   ];
 
   networking.firewall.allowedTCPPorts = [
+        config.services.netatalk.port
+        5353 # avahi
+
+        # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
+        3005 8324 32469 # TCP, 32400 is allowed on all interfaces
+        1900 5353 32410 32412 32413 32414 # UDP
+
+
     # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
     32400 3005 8324 32469
     9100 # Prometheus NodeExporter

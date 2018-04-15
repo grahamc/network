@@ -21,6 +21,19 @@ publish() {
     "payload": "{\"target\": \"#nixos\", \"body\": \"$msg\", \"message_type\": \"notice\"}"
 }
 EOF
+    curl -v  \
+         -H "content-type:application/json" \
+         -XPOST \
+         AMQPAPI/api/exchanges/ircbot/amq.default/publish \
+         --data @- <<-EOF
+{
+    "properties": {},
+    "routing_key": "queue-publish",
+    "payload_encoding": "string",
+    "payload": "{\"target\": \"#nixos-bots\", \"body\": \"$msg\", \"message_type\": \"notice\"}"
+}
+EOF
+
 
 }
 

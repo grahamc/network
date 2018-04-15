@@ -1,6 +1,7 @@
 { pkgs, ... }:
 let
   src = import ./gcofborgpkg.nix;
+  githubgateway = import ./../../github-to-irc/default.nix { inherit pkgs; };
 
   ircservice = name: bin: cfg: {
     "ircbot-${name}" = {
@@ -41,6 +42,10 @@ in {
       (ircservice "factoids"
         "${src.ircbot}/bin/factoids"
         "${./../../ofborg/config.irc.json} ${./../../ofborg/factoids.toml}") //
+      (ircservice "github-to-irc"
+        "${githubgateway}/bin/github-to-irc"
+        "${./../../ofborg/config.irc.json}") //
       {};
+
   };
 }

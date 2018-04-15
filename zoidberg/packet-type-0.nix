@@ -18,7 +18,8 @@
   };
 
   deployment = {
-    targetHost = "2604:1380:0:d00::1";
+      targetHost =  "147.75.97.237"; # "2604:1380:0:d00::1";
+      # targetPort = 443;
   };
 
   fileSystems = {

@@ -11,7 +11,7 @@ in stdenv.mkDerivation rec {
 
   buildInputs = [
     pkgs.packet
-    (if true then pkgs.nixops else (import ./nixops/release.nix {}).build.x86_64-linux)
+    (if false then pkgs.nixops else (import ./nixops/release.nix {}).build.x86_64-linux)
     pkgs.jq
   ];
 
