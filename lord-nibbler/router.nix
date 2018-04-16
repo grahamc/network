@@ -19,6 +19,14 @@ vlans = {
     firstoctets = "10.88.88";
     subnet = 24;
   };
+
+  target = {
+    id = 54;
+    name = "target";
+    interface = "enp3s0";
+    firstoctets = "10.54.54";
+    subnet = 24;
+  };
 };
 
 in {
@@ -130,9 +138,16 @@ in lib.concatStrings [
         ip46tables -I FORWARD -i ${vlans.nougat.name} -o ${vlans.ofborg.name} -j DROP
         ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.nougat.name} -j DROP
 
+        ip46tables -I FORWARD -i ${vlans.nougat.name} -o ${vlans.target.name} -j DROP
+        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.nougat.name} -j DROP
+
+        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.ofborg.name} -j DROP
+        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.target.name} -j DROP
+
         # allow from trusted interfaces
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.ofborg.name} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.target.name} -o ${externalInterface} -j ACCEPT
 
         # allow traffic with existing state
         ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -153,6 +168,13 @@ in lib.concatStrings [
     ipv4.addresses = [{
       address = "${vlans.ofborg.firstoctets}.1";
       prefixLength = vlans.ofborg.subnet;
+    }];
+  };
+
+  networking.interfaces."${vlans.target.name}" = {
+    ipv4.addresses = [{
+      address = "${vlans.target.firstoctets}.1";
+      prefixLength = vlans.target.subnet;
     }];
   };
 
@@ -193,6 +215,11 @@ in lib.concatStrings [
       id = vlans.ofborg.id;
     };
 
+    "${vlans.target.name}" = {
+      interface = vlans.target.interface;
+      id = vlans.target.id;
+    };
+
   };
   networking.nat = {
     enable = true;
@@ -200,10 +227,12 @@ in lib.concatStrings [
     internalInterfaces = [
       vlans.nougat.name
       vlans.ofborg.name
+      vlans.target.name
     ];
     internalIPs = [
       "${vlans.nougat.firstoctets}.0/${toString vlans.nougat.subnet}"
       "${vlans.ofborg.firstoctets}.0/${toString vlans.ofborg.subnet}"
+      "${vlans.target.firstoctets}.0/${toString vlans.target.subnet}"
     ];
 
     forwardPorts = [
@@ -240,6 +269,7 @@ in lib.concatStrings [
     interfaces = [
       vlans.nougat.name
       vlans.ofborg.name
+      vlans.target.name
     ];
     extraConfig = ''
       subnet ${vlans.nougat.firstoctets}.0 netmask 255.255.255.0 {
@@ -264,6 +294,15 @@ in lib.concatStrings [
         option routers ${vlans.ofborg.firstoctets}.1;
         option domain-name-servers 8.8.8.8;
         range ${vlans.ofborg.firstoctets}.100 ${vlans.ofborg.firstoctets}.200;
+
+      }
+
+      subnet ${vlans.target.firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${vlans.target.firstoctets}.255;
+        option routers ${vlans.target.firstoctets}.1;
+        option domain-name-servers 8.8.8.8;
+        range ${vlans.target.firstoctets}.100 ${vlans.target.firstoctets}.200;
 
       }
     '';
