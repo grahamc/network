@@ -2,15 +2,25 @@
 { config, lib, ... }:
 let
   externalInterface = "enp1s0";
-  internalWiredInterface = "enp2s0";
 
+vlans = {
+  nougat = {
+    # id = 40;
+    name = "enp2s0";
+    interface = "enp2s0";
+    firstoctets = "10.5.3";
+    subnet = 24;
+  };
 
-  internalInterfaces = [ internalWiredInterface ];
+  ofborg = {
+    id = 50;
+    name = "ofborg";
+    interface = "enp3s0";
+    firstoctets = "10.88.88";
+    subnet = 24;
+  };
+};
 
-  firstoctets = "10.5.3";
-
-  internalSegregatedInterface = "enp3s0";
-  segregatedFirstoctets = "10.99.99";
 in {
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.forwarding" = 1;
@@ -58,19 +68,10 @@ in {
           --dport ${toString port} -j nixos-fw-accept
       '';
 
-    allowPortMonitoring = port:
-      ''
-        iptables -A nixos-fw -p tcp -s 147.75.97.237 \
-          --dport ${toString port} -j nixos-fw-accept
-
-        ip6tables -A nixos-fw -p tcp -s 2604:1380:0:d00::1 \
-          --dport ${toString port} -j nixos-fw-accept
-      '';
-
     privatelyAcceptPort = port:
       lib.concatMapStrings
         (interface: acceptPortOnInterface port interface)
-        internalInterfaces;
+        [vlans.nougat.name];
 
     publiclyRejectPort = port:
       refusePortOnInterface port externalInterface;
@@ -89,20 +90,14 @@ in {
           --dport ${toString port} -j ACCEPT
       '';
 in lib.concatStrings [
-    (refusePortOnInterfaceHighPriority 22 internalSegregatedInterface)
-    (lib.concatMapStrings allowPortMonitoring
-      [
-        9100 # Prometheus NodeExporter
-      ])
-    #(forwardPortToHost 9100 externalInterface "tcp"
-    #  "2604:6000:e6c2:f501:8e89:a5ff:fe10:53f0/128") # ogden
-    ''
-      ip6tables -A FORWARD -i ${externalInterface} -o ${internalWiredInterface} -p tcp --dport 9100 -j ACCEPT
-    ''
+    # (refusePortOnInterfaceHighPriority 22 vlans.target.name)
     (lib.concatMapStrings allowPortOnlyPrivately
     [
+
         53 # knot dns resolver
         80 # nginx for tftp handoff
+        67 # DHCP?
+        68 # DHCP?
         69 # tftp
         config.services.netatalk.port
         5353 # avahi
@@ -132,12 +127,13 @@ in lib.concatStrings [
       ])
       ''
         # Don't allow segregated nodes to talk to the squishy nodes
-        ip46tables -I FORWARD -i ${internalWiredInterface} -o ${internalSegregatedInterface} -j DROP
-        ip46tables -I FORWARD -i ${internalSegregatedInterface} -o ${internalWiredInterface} -j DROP
+        ip46tables -I FORWARD -i ${vlans.nougat.name} -o ${vlans.ofborg.name} -j DROP
+        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.nougat.name} -j DROP
 
         # allow from trusted interfaces
-        ip46tables -A FORWARD -m state --state NEW -i ${internalWiredInterface} -o ${externalInterface} -j ACCEPT
-        ip46tables -A FORWARD -m state --state NEW -i ${internalSegregatedInterface} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat.name} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.ofborg.name} -o ${externalInterface} -j ACCEPT
+
         # allow traffic with existing state
         ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
         # block forwarding from external interface
@@ -146,22 +142,23 @@ in lib.concatStrings [
   ];
   networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
   networking.firewall.allowPing = true;
-  networking.interfaces."${internalWiredInterface}" = {
+  networking.interfaces."${vlans.nougat.name}" = {
     ipv4.addresses = [{
-      address = "${firstoctets}.1";
-      prefixLength = 24;
+      address = "${vlans.nougat.firstoctets}.1";
+      prefixLength = vlans.nougat.subnet;
     }];
   };
-  networking.interfaces."${internalSegregatedInterface}" = {
+
+  networking.interfaces."${vlans.ofborg.name}" = {
     ipv4.addresses = [{
-      address = "${segregatedFirstoctets}.1";
-      prefixLength = 24;
+      address = "${vlans.ofborg.firstoctets}.1";
+      prefixLength = vlans.ofborg.subnet;
     }];
   };
 
   services.kresd = {
     enable = true;
-    interfaces = [ "::1" "127.0.0.1" "${firstoctets}.1" ];
+    interfaces = [ "::1" "127.0.0.1" "${vlans.nougat.firstoctets}.1" ];
     extraConfig = if true then ''
       modules = {
       	'policy',   -- Block queries to local zones/bad sites
@@ -184,12 +181,29 @@ in lib.concatStrings [
     '';
   };
 
+  networking.vlans = {
+    # !!! Make nougat actually a vlan
+    #"${vlans.nougat.name}" = {
+    #  interface = vlans.nougat.interface;
+    #  id = vlans.nougat.id;
+    #};
+
+    "${vlans.ofborg.name}" = {
+      interface = vlans.ofborg.interface;
+      id = vlans.ofborg.id;
+    };
+
+  };
   networking.nat = {
     enable = true;
     externalInterface = externalInterface;
-    internalInterfaces = internalInterfaces ++ [internalSegregatedInterface];
+    internalInterfaces = [
+      vlans.nougat.name
+      vlans.ofborg.name
+    ];
     internalIPs = [
-      "${firstoctets}.0/24" "${segregatedFirstoctets}.0/24"
+      "${vlans.nougat.firstoctets}.0/${toString vlans.nougat.subnet}"
+      "${vlans.ofborg.firstoctets}.0/${toString vlans.ofborg.subnet}"
     ];
 
     forwardPorts = [
@@ -201,7 +215,7 @@ in lib.concatStrings [
   services.radvd = {
     enable = true;
     config = ''
-      interface ${internalWiredInterface}
+      interface ${vlans.nougat.name}
       {
          AdvSendAdvert on;
          prefix ::/64
@@ -217,51 +231,40 @@ in lib.concatStrings [
     noipv6rs
     interface ${externalInterface}
     ia_na 1
-    ia_pd 2/::/56 ${internalWiredInterface}/1
+    ia_pd 2/::/56 ${vlans.nougat.name}/1
   '';
 
 
   services.dhcpd4 = {
     enable = true;
-    interfaces = internalInterfaces ++ [internalSegregatedInterface];
+    interfaces = [
+      vlans.nougat.name
+      vlans.ofborg.name
+    ];
     extraConfig = ''
-      subnet ${firstoctets}.0 netmask 255.255.255.0 {
+      subnet ${vlans.nougat.firstoctets}.0 netmask 255.255.255.0 {
         option subnet-mask 255.255.255.0;
-        option broadcast-address ${firstoctets}.255;
-        option routers ${firstoctets}.1;
-        option domain-name-servers ${firstoctets}.1;
+        option broadcast-address ${vlans.nougat.firstoctets}.255;
+        option routers ${vlans.nougat.firstoctets}.1;
+        option domain-name-servers ${vlans.nougat.firstoctets}.1;
         option domain-name "${secrets.router.domainname}";
         if exists user-class and option user-class = "iPXE" {
-          filename "http://${firstoctets}.1/nixos/netboot.ipxe";
+          filename "http://${vlans.nougat.firstoctets}.1/nixos/netboot.ipxe";
         } else {
           filename "ipxe/undionly.kpxe";
         }
 
-        next-server ${firstoctets}.1;
-        range ${firstoctets}.100 ${firstoctets}.200;
-
-        host ndndx-wifi {
-          hardware ethernet 78:31:c1:bc:8a:dc;
-          fixed-address ${firstoctets}.61;
-        }
-
-        host ndndx-wired {
-          hardware ethernet 98:5a:eb:d5:cc:50;
-          fixed-address ${firstoctets}.51;
-        }
-
-        host odroid-c2-wired-bootp {
-          hardware ethernet 00:1e:06:33:1c:28;
-          fixed-address ${firstoctets}.11;
-        }
+        next-server ${vlans.nougat.firstoctets}.1;
+        range ${vlans.nougat.firstoctets}.100 ${vlans.nougat.firstoctets}.200;
       }
 
-      subnet ${segregatedFirstoctets}.0 netmask 255.255.255.0 {
+      subnet ${vlans.ofborg.firstoctets}.0 netmask 255.255.255.0 {
         option subnet-mask 255.255.255.0;
-        option broadcast-address ${segregatedFirstoctets}.255;
-        option routers ${segregatedFirstoctets}.1;
+        option broadcast-address ${vlans.ofborg.firstoctets}.255;
+        option routers ${vlans.ofborg.firstoctets}.1;
         option domain-name-servers 8.8.8.8;
-        range ${segregatedFirstoctets}.100 ${segregatedFirstoctets}.200;
+        range ${vlans.ofborg.firstoctets}.100 ${vlans.ofborg.firstoctets}.200;
+
       }
     '';
   };
