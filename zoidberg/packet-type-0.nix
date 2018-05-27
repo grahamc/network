@@ -13,6 +13,11 @@
         devices = [ "/dev/sda" ];
         enable = true;
         version = 2;
+        extraConfig = ''
+          serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1
+          terminal_output serial console
+          terminal_input serial console
+        '';
       };
     };
   };
@@ -42,6 +47,7 @@
   networking = {
     hostId = "7a13df42";
     hostName = "zoidberg";
+    dhcpcd.enable = false;
 
     nameservers = [ "4.2.2.1" "4.2.2.2" "2001:4860:4860::8888" ];
 
@@ -68,23 +74,34 @@
       bond0 = {
         useDHCP = true;
 
-        ip4 = [
-          {
-            address = "147.75.97.237";
-            prefixLength = 31;
-          }
-          {
-            address = "10.100.5.1";
-            prefixLength = 31;
-          }
-        ];
+        ipv4 = {
+          routes = [
+            {
+              address = "10.0.0.0";
+              prefixLength = 8;
+              via = "10.100.5.0";
+            }
+          ];
+          addresses = [
+            {
+              address = "147.75.97.237";
+              prefixLength = 31;
+            }
+            {
+              address = "10.100.5.1";
+              prefixLength = 31;
+            }
+          ];
+        };
 
-        ip6 = [
-          {
-            address = "2604:1380:0:d00::1";
-            prefixLength = 127;
-          }
-        ];
+        ipv6 = {
+          addresses = [
+            {
+              address = "2604:1380:0:d00::1";
+              prefixLength = 127;
+            }
+          ];
+        };
       };
     };
   };
