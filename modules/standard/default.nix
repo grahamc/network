@@ -8,17 +8,6 @@ in {
     nixpkgs = {
       config = {
         allowUnfree = true;
-        packageOverrides = pkgs: {
-          prometheus-node-exporter = pkgs.prometheus-node-exporter.overrideAttrs (x: {
-            # Update from 17.09's 0.14.0 because it lacked CPU metric support
-            src = pkgs.fetchFromGitHub {
-              rev = "v0.15.0";
-              owner = "prometheus";
-              repo = "node_exporter";
-              sha256 = "0v1m6m9fmlw66s9v50y2rfr5kbpb9mxbwpcab4cmgcjs1y7wcn49";
-            };
-          });
-        };
       };
     };
 
@@ -85,18 +74,6 @@ in {
     '';
     environment.etc.host-nix-channel.source = pkgs.path;
 
-    services.prometheus.exporters.node = {
-      enable = true;
-      enabledCollectors = [
-        "cpu" # broken?
-        "bonding" "systemd" "diskstats" "filesystem" "netstat" "meminfo"
-        "textfile"
-      ];
-      extraFlags = [
-        "--collector.textfile.directory=/var/lib/prometheus-node-exporter-text-files"
-        ""
-      ];
-    };
 
     system.activationScripts.node-exporter-system-version = ''
       mkdir -pm 0775 /var/lib/prometheus-node-exporter-text-files

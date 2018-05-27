@@ -80,8 +80,6 @@ in
     };
   };
 
-  services.prometheus.nodeExporter.listenAddress = "[::]";
-
   services.fail2ban = {
     enable = true;
   };
