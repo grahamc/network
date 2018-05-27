@@ -45,7 +45,6 @@ in {
       modules = [
         "${nixpkgs_path}/nixos/modules/installer/netboot/netboot-minimal.nix"
          { boot.kernelParams = [ "console=ttyS0,115200n8" ]; }
-         { services.prometheus.nodeExporter.enable = lib.mkForce false; }
       ];
     };
    in {
