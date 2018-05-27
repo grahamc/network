@@ -217,6 +217,13 @@ in { pkgs, ... }: {
           root = "/var/lib/nginx/grahamc/gsc.io/public";
         };
 
+        "ihavenoideawhatimdoing.dog" = defaultVhostCfg // rec {
+          enableACME = true;
+          forceSSL = true;
+          root = pkgs.callPackage ../../ihavenoideawhatimdoing.dog {};
+          locations = (vhostPHPLocations pkgs root);
+        };
+
         "www.gsc.io" = defaultVhostCfg // {
           enableACME = true;
           forceSSL = true;
