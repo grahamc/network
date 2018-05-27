@@ -12,6 +12,22 @@ vlans = {
     subnet = 24;
   };
 
+  admin-wifi = {
+    id = 10;
+    name = "adminwifi";
+    interface = "enp3s0";
+    firstoctets = "10.5.5"; # TODO: Validate ends in no dot
+    subnet = 24;
+  };
+
+  nougat-wifi = {
+    id = 41;
+    name = "nougatwifi";
+    interface = "enp3s0";
+    firstoctets = "10.5.4"; # TODO: Validate ends in no dot
+    subnet = 24;
+  };
+
   ofborg = {
     id = 50;
     name = "ofborg";
@@ -25,6 +41,14 @@ vlans = {
     name = "target";
     interface = "enp3s0";
     firstoctets = "10.54.54";
+    subnet = 24;
+  };
+
+  hue = {
+    id = 80;
+    name = "hue";
+    interface = "enp3s0";
+    firstoctets = "10.80.80";
     subnet = 24;
   };
 };
@@ -79,7 +103,7 @@ in {
     privatelyAcceptPort = port:
       lib.concatMapStrings
         (interface: acceptPortOnInterface port interface)
-        [vlans.nougat.name];
+        [vlans.nougat.name vlans.nougat-wifi.name vlans.admin-wifi.name];
 
     publiclyRejectPort = port:
       refusePortOnInterface port externalInterface;
@@ -144,7 +168,16 @@ in lib.concatStrings [
         ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.ofborg.name} -j DROP
         ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.target.name} -j DROP
 
+        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.hue.name} -j DROP
+        ip46tables -I FORWARD -i ${vlans.hue.name} -o ${vlans.target.name} -j DROP
+
+        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.hue.name} -j DROP
+        ip46tables -I FORWARD -i ${vlans.hue.name} -o ${vlans.ofborg.name} -j DROP
+
+
         # allow from trusted interfaces
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.admin-wifi.name} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat-wifi.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.ofborg.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.target.name} -o ${externalInterface} -j ACCEPT
@@ -164,6 +197,20 @@ in lib.concatStrings [
     }];
   };
 
+  networking.interfaces."${vlans.admin-wifi.name}" = {
+    ipv4.addresses = [{
+      address = "${vlans.admin-wifi.firstoctets}.1";
+      prefixLength = vlans.admin-wifi.subnet;
+    }];
+  };
+
+  networking.interfaces."${vlans.nougat-wifi.name}" = {
+    ipv4.addresses = [{
+      address = "${vlans.nougat-wifi.firstoctets}.1";
+      prefixLength = vlans.nougat-wifi.subnet;
+    }];
+  };
+
   networking.interfaces."${vlans.ofborg.name}" = {
     ipv4.addresses = [{
       address = "${vlans.ofborg.firstoctets}.1";
@@ -178,9 +225,16 @@ in lib.concatStrings [
     }];
   };
 
+  networking.interfaces."${vlans.hue.name}" = {
+    ipv4.addresses = [{
+      address = "${vlans.hue.firstoctets}.1";
+      prefixLength = vlans.hue.subnet;
+    }];
+  };
+
   services.kresd = {
     enable = true;
-    interfaces = [ "::1" "127.0.0.1" "${vlans.nougat.firstoctets}.1" ];
+    interfaces = [ "::1" "127.0.0.1" "${vlans.nougat.firstoctets}.1" "${vlans.nougat-wifi.firstoctets}.1" ];
     extraConfig = if true then ''
       modules = {
       	'policy',   -- Block queries to local zones/bad sites
@@ -210,6 +264,16 @@ in lib.concatStrings [
     #  id = vlans.nougat.id;
     #};
 
+    "${vlans.admin-wifi.name}" = {
+      interface = vlans.admin-wifi.interface;
+      id = vlans.admin-wifi.id;
+    };
+
+    "${vlans.nougat-wifi.name}" = {
+      interface = vlans.nougat-wifi.interface;
+      id = vlans.nougat-wifi.id;
+    };
+
     "${vlans.ofborg.name}" = {
       interface = vlans.ofborg.interface;
       id = vlans.ofborg.id;
@@ -220,19 +284,30 @@ in lib.concatStrings [
       id = vlans.target.id;
     };
 
+    "${vlans.hue.name}" = {
+      interface = vlans.hue.interface;
+      id = vlans.hue.id;
+    };
+
   };
   networking.nat = {
     enable = true;
     externalInterface = externalInterface;
     internalInterfaces = [
+      vlans.admin-wifi.name
       vlans.nougat.name
+      vlans.nougat-wifi.name
       vlans.ofborg.name
       vlans.target.name
+      vlans.hue.name
     ];
     internalIPs = [
+      "${vlans.admin-wifi.firstoctets}.0/${toString vlans.admin-wifi.subnet}"
       "${vlans.nougat.firstoctets}.0/${toString vlans.nougat.subnet}"
+      "${vlans.nougat-wifi.firstoctets}.0/${toString vlans.nougat-wifi.subnet}"
       "${vlans.ofborg.firstoctets}.0/${toString vlans.ofborg.subnet}"
       "${vlans.target.firstoctets}.0/${toString vlans.target.subnet}"
+      "${vlans.hue.firstoctets}.0/${toString vlans.hue.subnet}"
     ];
 
     forwardPorts = [
@@ -267,9 +342,12 @@ in lib.concatStrings [
   services.dhcpd4 = {
     enable = true;
     interfaces = [
+      vlans.admin-wifi.name
       vlans.nougat.name
+      vlans.nougat-wifi.name
       vlans.ofborg.name
       vlans.target.name
+      vlans.hue.name
     ];
     extraConfig = ''
       subnet ${vlans.nougat.firstoctets}.0 netmask 255.255.255.0 {
@@ -288,13 +366,29 @@ in lib.concatStrings [
         range ${vlans.nougat.firstoctets}.100 ${vlans.nougat.firstoctets}.200;
       }
 
+      subnet ${vlans.admin-wifi.firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${vlans.admin-wifi.firstoctets}.255;
+        option routers ${vlans.admin-wifi.firstoctets}.1;
+        option domain-name-servers ${vlans.admin-wifi.firstoctets}.1;
+        range ${vlans.admin-wifi.firstoctets}.100 ${vlans.admin-wifi.firstoctets}.200;
+      }
+
+
+      subnet ${vlans.nougat-wifi.firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${vlans.nougat-wifi.firstoctets}.255;
+        option routers ${vlans.nougat-wifi.firstoctets}.1;
+        option domain-name-servers ${vlans.nougat-wifi.firstoctets}.1;
+        range ${vlans.nougat-wifi.firstoctets}.100 ${vlans.nougat-wifi.firstoctets}.200;
+      }
+
       subnet ${vlans.ofborg.firstoctets}.0 netmask 255.255.255.0 {
         option subnet-mask 255.255.255.0;
         option broadcast-address ${vlans.ofborg.firstoctets}.255;
         option routers ${vlans.ofborg.firstoctets}.1;
         option domain-name-servers 8.8.8.8;
         range ${vlans.ofborg.firstoctets}.100 ${vlans.ofborg.firstoctets}.200;
-
       }
 
       subnet ${vlans.target.firstoctets}.0 netmask 255.255.255.0 {
@@ -303,7 +397,13 @@ in lib.concatStrings [
         option routers ${vlans.target.firstoctets}.1;
         option domain-name-servers 8.8.8.8;
         range ${vlans.target.firstoctets}.100 ${vlans.target.firstoctets}.200;
+      }
 
+      subnet ${vlans.hue.firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${vlans.hue.firstoctets}.255;
+        option routers ${vlans.hue.firstoctets}.1;
+        range ${vlans.hue.firstoctets}.100 ${vlans.hue.firstoctets}.200;
       }
     '';
   };
