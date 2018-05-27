@@ -50,16 +50,6 @@ in {
           enableACME = true;
           forceSSL = true;
         };
-
-        "nix.ci" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          root = ./nix.ci;
-          locations = {
-            "/status".proxyPass = "http://127.0.0.1:9090/alerts";
-            "/static".proxyPass = "http://127.0.0.1:9090/static";
-          };
-        };
       };
     };
 
