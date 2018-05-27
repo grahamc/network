@@ -146,15 +146,43 @@ in
   # Plex
   services.plex = {
     enable = true;
-    package = pkgs.plex.overrideAttrs (x: {
-      src = pkgs.fetchurl {
-        url = let
-        version = "1.10.1.4602";
-        vsnHash = "f54242b6b";
+    #package = pkgs.plex.overrideAttrs (x: {
+    #  src = pkgs.fetchurl {
+    #    url = let
+    #    version = "1.10.1.4602";
+    #    vsnHash = "f54242b6b";
 
-      in "https://downloads.plex.tv/plex-media-server/${version}-${vsnHash}/plexmediaserver-${version}-${vsnHash}.x86_64.rpm";
-      sha256 = "0f7yh8pqjv9ib4191mg0ydlb44ls9xc1ybv10v1iy75s9w00c0vd";
-      };
-    });
+    #  in "https://downloads.plex.tv/plex-media-server/${version}-${vsnHash}/plexmediaserver-${version}-${vsnHash}.x86_64.rpm";
+    #  sha256 = "0f7yh8pqjv9ib4191mg0ydlb44ls9xc1ybv10v1iy75s9w00c0vd";
+    #  };
+    #});
   };
+
+  services.buildkite-agent = {
+    enable = true;
+    tokenPath = "/run/keys/buildkite-token";
+    openssh.privateKeyPath = "/run/keys/buildkite-ssh-private-key";
+    openssh.publicKeyPath = "/run/keys/buildkite-ssh-public-key";
+    runtimePackages = [ pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
+  };
+
+  deployment.keys.buildkite-token = {
+    text = builtins.readFile secrets.buildkite.token;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+  deployment.keys.buildkite-ssh-public-key = {
+    text = builtins.readFile secrets.buildkite.openssh-public-key;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+  deployment.keys.buildkite-ssh-private-key = {
+    text = builtins.readFile secrets.buildkite.openssh-private-key;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+
 }
