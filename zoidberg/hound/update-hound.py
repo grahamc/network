@@ -8,10 +8,10 @@ from pprint import pprint
 blacklist = [
     'https://github.com/NixOS/nixos.git',
     'https://github.com/NixOS/systemd.git',
+    'https://github.com/NixOS/docker.git',
     'https://github.com/NixOS/nixpkgs-channels.git',
     'https://github.com/NixOS/nixops-dashboard.git',
     'https://github.com/NixOS/nixos-foundation.git',
-    'https://github.com/NixOS/ofborg.git',
 ];
 
 def all_for_org(org, blacklist):
@@ -30,7 +30,12 @@ def all_for_org(org, blacklist):
         repos = repo_resp.json()
 
         resp.update({
-            "{}-{}".format(org, repo['name']): { "url": repo['clone_url'] }
+            "{}-{}".format(org, repo['name']): {
+                'url': repo['clone_url'],
+                'vcs-config': {
+                    'ref': repo['default_branch']
+                }
+            }
             for repo in repos
             if repo['clone_url'] not in blacklist
         })

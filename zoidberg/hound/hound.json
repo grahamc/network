@@ -3,79 +3,166 @@
     "max-concurrent-indexers": 1,
     "repos": {
         "NixOS-cabal2nix": {
-            "url": "https://github.com/NixOS/cabal2nix.git"
+            "url": "https://github.com/NixOS/cabal2nix.git",
+            "vcs-config": {
+                "ref": "master"
+            }
+        },
+        "NixOS-docker": {
+            "url": "https://github.com/NixOS/docker.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-hydra": {
-            "url": "https://github.com/NixOS/hydra.git"
+            "url": "https://github.com/NixOS/hydra.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-hydra-ant-logger": {
-            "url": "https://github.com/NixOS/hydra-ant-logger.git"
+            "url": "https://github.com/NixOS/hydra-ant-logger.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-hydra-provisioner": {
-            "url": "https://github.com/NixOS/hydra-provisioner.git"
+            "url": "https://github.com/NixOS/hydra-provisioner.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-mvn2nix-maven-plugin": {
-            "url": "https://github.com/NixOS/mvn2nix-maven-plugin.git"
+            "url": "https://github.com/NixOS/mvn2nix-maven-plugin.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nix": {
-            "url": "https://github.com/NixOS/nix.git"
+            "url": "https://github.com/NixOS/nix.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nix-eclipse": {
-            "url": "https://github.com/NixOS/nix-eclipse.git"
+            "url": "https://github.com/NixOS/nix-eclipse.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nix-idea": {
-            "url": "https://github.com/NixOS/nix-idea.git"
+            "url": "https://github.com/NixOS/nix-idea.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nix-mode": {
-            "url": "https://github.com/NixOS/nix-mode.git"
+            "url": "https://github.com/NixOS/nix-mode.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nix-pills": {
-            "url": "https://github.com/NixOS/nix-pills.git"
+            "url": "https://github.com/NixOS/nix-pills.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixcon": {
-            "url": "https://github.com/NixOS/nixcon.git"
+            "url": "https://github.com/NixOS/nixcon.git",
+            "vcs-config": {
+                "ref": "gh-pages"
+            }
         },
         "NixOS-nixops": {
-            "url": "https://github.com/NixOS/nixops.git"
+            "url": "https://github.com/NixOS/nixops.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-artwork": {
-            "url": "https://github.com/NixOS/nixos-artwork.git"
+            "url": "https://github.com/NixOS/nixos-artwork.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-channel-scripts": {
-            "url": "https://github.com/NixOS/nixos-channel-scripts.git"
+            "url": "https://github.com/NixOS/nixos-channel-scripts.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-hardware": {
-            "url": "https://github.com/NixOS/nixos-hardware.git"
+            "url": "https://github.com/NixOS/nixos-hardware.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-homepage": {
-            "url": "https://github.com/NixOS/nixos-homepage.git"
+            "url": "https://github.com/NixOS/nixos-homepage.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-org-configurations": {
-            "url": "https://github.com/NixOS/nixos-org-configurations.git"
+            "url": "https://github.com/NixOS/nixos-org-configurations.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixos-weekly": {
-            "url": "https://github.com/NixOS/nixos-weekly.git"
+            "url": "https://github.com/NixOS/nixos-weekly.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixpart": {
-            "url": "https://github.com/NixOS/nixpart.git"
+            "url": "https://github.com/NixOS/nixpart.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-nixpkgs": {
-            "url": "https://github.com/NixOS/nixpkgs.git"
+            "url": "https://github.com/NixOS/nixpkgs.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-npm2nix": {
-            "url": "https://github.com/NixOS/npm2nix.git"
+            "url": "https://github.com/NixOS/npm2nix.git",
+            "vcs-config": {
+                "ref": "master"
+            }
+        },
+        "NixOS-ofborg": {
+            "url": "https://github.com/NixOS/ofborg.git",
+            "vcs-config": {
+                "ref": "released"
+            }
         },
         "NixOS-patchelf": {
-            "url": "https://github.com/NixOS/patchelf.git"
+            "url": "https://github.com/NixOS/patchelf.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-rfcs": {
-            "url": "https://github.com/NixOS/rfcs.git"
+            "url": "https://github.com/NixOS/rfcs.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-security": {
-            "url": "https://github.com/NixOS/security.git"
+            "url": "https://github.com/NixOS/security.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "NixOS-security-advisories": {
-            "url": "https://github.com/NixOS/security-advisories.git"
+            "url": "https://github.com/NixOS/security-advisories.git",
+            "vcs-config": {
+                "ref": "master"
+            }
         },
         "nixos-users-wiki-wiki": {
             "url": "https://github.com/nixos-users/wiki.wiki.git",

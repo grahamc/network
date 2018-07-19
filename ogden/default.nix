@@ -121,6 +121,7 @@ in
 
 
   users = {
+    groups.writemedia = {};
     extraUsers = {
       emilyc = {
         isNormalUser = true;
@@ -133,6 +134,7 @@ in
       kchristensen = {
         isNormalUser = true;
         uid = 1003;
+        extraGroups = [ "writemedia" ];
         createHome = true;
         home = "/home/kchristensen";
         openssh.authorizedKeys.keyFiles = [
@@ -146,16 +148,18 @@ in
   # Plex
   services.plex = {
     enable = true;
-    #package = pkgs.plex.overrideAttrs (x: {
-    #  src = pkgs.fetchurl {
-    #    url = let
-    #    version = "1.10.1.4602";
-    #    vsnHash = "f54242b6b";
-
-    #  in "https://downloads.plex.tv/plex-media-server/${version}-${vsnHash}/plexmediaserver-${version}-${vsnHash}.x86_64.rpm";
-    #  sha256 = "0f7yh8pqjv9ib4191mg0ydlb44ls9xc1ybv10v1iy75s9w00c0vd";
-    #  };
-    #});
+    package = pkgs.plex.overrideAttrs (x: let
+        # see https://www.plex.tv/media-server-downloads/
+        version = "1.13.3.5223-cd1e0da1b";
+        sha1 = "47f77073c6b6107f2ca7e46a00dd5841db4de9b6";
+      in {
+        name = "plex-${version}";
+        src = pkgs.fetchurl {
+          url = "https://downloads.plex.tv/plex-media-server/${version}/plexmediaserver-${version}.x86_64.rpm";
+          inherit sha1;
+        };
+      }
+    );
   };
 
   services.buildkite-agent = {
