@@ -39,7 +39,7 @@ EOF
 
 filter_recent_timestamps() {
     since=$(date -d "3 months ago" "+%s")
-    while read commit timestamp; do
+    while read commit committed timestamp; do
         if [ "$timestamp" -ge "$since" ]; then
             echo "$commit $timestamp";
         fi;
@@ -72,7 +72,7 @@ make_graph() {
   series: [
 EOF
 
-    find . -name history | (
+    find . -name history-v2 | sort -h -t- -k1 -k2 | (
         i=1
         while read file; do
             datapoints=$(datapoints < "$file");
@@ -124,6 +124,12 @@ readonly dest="$2"
                     cd "$gitrepo" >&2
                     git show -s --format="%H %at" "$remote/$branch"
                 ) > latest.next
+                touch latest-v2
+                (
+                    cd "$gitrepo" >&2
+                    git show -s --format="%H %at $(date '+%s')" "$remote/$branch"
+                ) > latest-v2.next
+
                 if [ "$(md5sum < latest.next)" != "$(md5sum < latest)" ]; then
                     dbg "Change in ${branch}"
                     (
@@ -137,16 +143,40 @@ readonly dest="$2"
                     (
                         cat history
                         cat latest
-                    ) | tail -n10000 > history.next
+                    ) | tail -n100000 > history.next
                     mv history.next history
                     chmod a+r history
-                else
-                    dbg "No change in ${branch}"
-                    rm latest.next
+
+
+                    # Note: latest-v2 doesn't do a hash check b/c
+                    # its hash always changes due to the date.
+                    mv latest-v2.next latest-v2
+                    chmod a+r latest-v2
+                    touch history-v2
+                    (
+                        cat history-v2
+                        cat latest-v2
+                    ) | tail -n100000 > history-v2.next
+                    mv history-v2.next history-v2
+                    chmod a+r history-v2
                 fi
+
+                rm -f latest.next latest-v2.next
 
                 cat <<EOF > README.txt
                     This service is provided for free.
+
+                    The format of latest and history is:
+                        commit-hash date-of-commit
+
+                    The format of latest-v2 and history-v2 is:
+                        commit-hash date-of-commit date-of-advancement
+
+                    Both formats will continue to be updated, with no
+                    plans to end support for the original version.
+
+                    The history and history-v2 files will retain
+                    100000 lines of history.
 
                     If you use this service automatically please be
                     polite and follow some rules:
