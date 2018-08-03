@@ -150,8 +150,8 @@ in
     enable = true;
     package = pkgs.plex.overrideAttrs (x: let
         # see https://www.plex.tv/media-server-downloads/
-        version = "1.13.3.5223-cd1e0da1b";
-        sha1 = "47f77073c6b6107f2ca7e46a00dd5841db4de9b6";
+        version = "1.13.4.5271-200287a06";
+        sha1 = "0404340d1d8b929a04bc83d7d43523fc3232a5ac";
       in {
         name = "plex-${version}";
         src = pkgs.fetchurl {
