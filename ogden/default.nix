@@ -167,9 +167,15 @@ in
     tokenPath = "/run/keys/buildkite-token";
     openssh.privateKeyPath = "/run/keys/buildkite-ssh-private-key";
     openssh.publicKeyPath = "/run/keys/buildkite-ssh-public-key";
-    runtimePackages = [ pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
+    runtimePackages = [ pkgs.gzip pkgs.gnutar pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
   };
 
+  deployment.keys.packet-nixos-config = {
+    text = builtins.readFile secrets.buildkite.packet-config;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
   deployment.keys.buildkite-token = {
     text = builtins.readFile secrets.buildkite.token;
     user = config.users.extraUsers.buildkite-agent.name;
