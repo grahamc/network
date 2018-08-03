@@ -22,7 +22,7 @@ let
   };
 in { pkgs, ... }: {
   imports = [
-    ./packet-type-0.nix
+    (import ./packet-type-0.nix { inherit secrets; })
     ./ircbot.nix
     (import ./prometheus.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
