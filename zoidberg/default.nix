@@ -170,6 +170,8 @@ in { pkgs, ... }: {
       package = pkgs.hound.overrideAttrs (x: {
         patches = [
           ./hound/0001-Fail-to-start-if-any-repos-fail-to-index.patch
+          ./hound/0002-Custom-branch-specifier-PR-275.patch
+          ./hound/0003-PR-275-p1-Replace-master-in-the-default-base-URL-with-a-rev.patch
         ];
       });
     };

@@ -8,12 +8,6 @@
                 "ref": "master"
             }
         },
-        "NixOS-docker": {
-            "url": "https://github.com/NixOS/docker.git",
-            "vcs-config": {
-                "ref": "master"
-            }
-        },
         "NixOS-hydra": {
             "url": "https://github.com/NixOS/hydra.git",
             "vcs-config": {
