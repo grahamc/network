@@ -24,7 +24,6 @@ in { pkgs, ... }: {
   imports = [
     (import ./packet-type-0.nix { inherit secrets; })
     ./ircbot.nix
-    (import ./prometheus.nix { inherit secrets; })
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {
