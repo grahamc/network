@@ -261,6 +261,22 @@ in { pkgs, ... }: {
           locations = (vhostPHPLocations pkgs root);
         };
 
+        "grahamc.com" = defaultVhostCfg // rec {
+          enableACME = true;
+          forceSSL = true;
+          root = pkgs.callPackage ../../grahamc.github.com {};
+          locations."/" = {
+            index = "index.html index.xml";
+            tryFiles = "$uri $uri/ $uri.html $uri.xml =404";
+          };
+        };
+
+        "www.grahamc.com" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+          globalRedirect = "grahamc.com";
+        };
+
         "www.gsc.io" = defaultVhostCfg // {
           enableACME = true;
           forceSSL = true;
