@@ -38,13 +38,13 @@ in {
     services =
       (ircservice "gateway"
         "${src.ircbot}/bin/gateway"
-        ./../../ofborg/config.irc.json) //
+        ./../../ircbot/ofborg/config.irc.json) //
       (ircservice "factoids"
         "${src.ircbot}/bin/factoids"
-        "${./../../ofborg/config.irc.json} ${./../../ofborg/factoids.toml}") //
+        "${./../../ircbot/ofborg/config.irc.json} ${./../../ircbot/ofborg/factoids.toml}") //
       (ircservice "github-to-irc"
         "${githubgateway}/bin/github-to-irc"
-        "${./../../ofborg/config.irc.json}") //
+        "${./../../ircbot/ofborg/config.irc.json}") //
       {};
 
   };

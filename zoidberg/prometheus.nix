@@ -8,55 +8,6 @@
   services.prometheus = {
     enable = true;
 
-    alertmanagerURL = [ "http://127.0.0.1:9093" ];
-    rules = [
-      ''
-        ALERT MissingOfBorgData
-        IF absent(ofborg_queue_builder_waiting) == 1
-        FOR 5m
-        LABELS {
-          severity="page"
-        }
-
-        ALERT StalledEvaluator
-        IF ofborg_queue_evaluator_waiting > 0 and ofborg_queue_evaluator_in_progress == 0
-        FOR 5m
-        LABELS {
-          severity="page"
-        }
-
-        ALERT BrokenEvaluator
-        IF (ofborg_queue_evaluator_waiting > 0 or ofborg_queue_evaluator_in_progress > 0) and changes(ofborg_task_evaluation_check_complete[1h]) == 0
-        FOR 30m
-        LABELS {
-          severity="page"
-        }
-
-        ALERT StalledBuilder
-        IF ofborg_queue_builder_waiting > 0 and ofborg_queue_builder_in_progress == 0
-        FOR 5m
-        LABELS {
-          severity="page"
-        }
-
-        ALERT FreeInodes4HrsAway
-        IF predict_linear(node_filesystem_files_free{mountpoint="/"}[1h], 4   * 3600) <= 0
-        FOR 5m
-        LABELS {
-          severity="page"
-        }
-
-        ALERT FreeSpace4HrsAway
-        IF predict_linear(node_filesystem_free{mountpoint="/"}[1h], 4 * 3600) <= 0
-        FOR 5m
-        LABELS {
-          severity="page"
-        }
-
-      ''
-    ];
-
-
     scrapeConfigs = [
       {
         job_name = "prometheus";
@@ -77,7 +28,6 @@
         job_name = "node";
         static_configs = [
           { targets = [ "zoidberg:9100" "ogden:9100"
-             # "evaluator-0:9100" "evaluator-1:9100" "evaluator-2:9100" "evaluator-3:9100" "evaluator-4:9100"
            ]; }
         ];
       }
@@ -93,28 +43,5 @@
         ];
       }
     ];
-
-    alertmanager = {
-      enable = true;
-      configuration = {
-        global = {};
-        route = {
-          receiver = "default_receiver";
-          group_by = ["cluster" "alertname"];
-        };
-
-        receivers = [
-          {
-            name = "default_receiver";
-            pushover_configs = [
-              {
-                user_key = secrets.pushover.user_key;
-                token = secrets.pushover.app_token;
-              }
-            ];
-          }
-        ];
-      };
-    };
   };
 }

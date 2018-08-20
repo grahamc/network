@@ -1,1 +1,1 @@
-(import ./../../ofborg {})
+(import ./../../ircbot/ofborg {})
