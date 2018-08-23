@@ -149,9 +149,9 @@ in
   services.plex = {
     enable = true;
     package = pkgs.plex.overrideAttrs (x: let
-        # see https://www.plex.tv/media-server-downloads/
-        version = "1.13.4.5271-200287a06";
-        sha1 = "0404340d1d8b929a04bc83d7d43523fc3232a5ac";
+        # see https://www.plex.tv/media-server-downloads/ for rpm
+        version = "1.13.5.5291-6fa5e50a8";
+        sha1 = "2eaa866db79e2f840c0cacce96a18a8e20a8813f";
       in {
         name = "plex-${version}";
         src = pkgs.fetchurl {
