@@ -5,11 +5,12 @@ let
 
 vlans = {
   nougat = {
-    # id = 40;
+    id = 1; # this was commented, and set to 40
     name = "enp2s0";
     interface = "enp2s0";
     firstoctets = "10.5.3";
     subnet = 24;
+
   };
 
   admin-wifi = {
@@ -141,6 +142,10 @@ in lib.concatStrings [
         69 # tftp
         config.services.netatalk.port
         5353 # avahi
+
+        9100 # node exporter
+        9130 # unifi exporter
+        9239 # surfboard exporter
 
         # https://help.ubnt.com/hc/en-us/articles/204910084-UniFi-Change-Default-Ports-for-Controller-and-UAPs
         # TCP:
@@ -356,6 +361,16 @@ in lib.concatStrings [
               AdvAutonomous on;
          };
       };
+
+      interface ${vlans.nougat-wifi.name}
+      {
+         AdvSendAdvert on;
+         prefix ::/64
+         {
+              AdvOnLink on;
+              AdvAutonomous on;
+         };
+      };
     '';
   };
 
@@ -363,7 +378,7 @@ in lib.concatStrings [
     noipv6rs
     interface ${externalInterface}
     ia_na 1
-    ia_pd 2/::/56 ${vlans.nougat.name}/1
+    ia_pd 2/::/56 ${vlans.nougat.name}/${toString vlans.nougat.id}/64 ${vlans.nougat-wifi.name}/${toString vlans.nougat-wifi.id}/64
   '';
 
 
@@ -379,12 +394,15 @@ in lib.concatStrings [
       vlans.roku.name
     ];
     extraConfig = ''
+      max-lease-time 604800;
+      default-lease-time 604800;
+
       subnet ${vlans.nougat.firstoctets}.0 netmask 255.255.255.0 {
         option subnet-mask 255.255.255.0;
         option broadcast-address ${vlans.nougat.firstoctets}.255;
         option routers ${vlans.nougat.firstoctets}.1;
         option domain-name-servers ${vlans.nougat.firstoctets}.1;
-        option domain-name "${secrets.router.domainname}";
+        # option domain-name "${secrets.router.domainname}";
         if exists user-class and option user-class = "iPXE" {
           filename "http://${vlans.nougat.firstoctets}.1/nixos/netboot.ipxe";
         } else {
