@@ -129,6 +129,24 @@ readonly dest="$2"
                     cd "$gitrepo" >&2
                     git show -s --format="%H %at $(date '+%s')" "$remote/$branch"
                 ) > latest-v2.next
+                touch latest-url
+                (
+                    url=$(curl -w '%{redirect_url}' "https://nixos.org/channels/$branch" -o /dev/null)
+                    echo "$url $(date '+%s')"
+                ) > latest-url.next
+
+                if [ "$(cut -d' ' -f1 latest-url.next | md5sum)" != "$(cut -d' ' -f1 latest-url | md5sum)" ]; then
+                    dbg "Change in ${branch} URL"
+                    mv latest-url.next latest-url
+                    chmod a+r latest-url
+                    touch history-url
+                    (
+                        cat history-url
+                        cat latest-url
+                    ) | tail -n100000 > history-url.next
+                    mv history-url.next history-url
+                    chmod a+r history-url
+                fi
 
                 if [ "$(md5sum < latest.next)" != "$(md5sum < latest)" ]; then
                     dbg "Change in ${branch}"
@@ -161,22 +179,10 @@ readonly dest="$2"
                     chmod a+r history-v2
                 fi
 
-                rm -f latest.next latest-v2.next
+                rm -f latest.next latest-v2.next latest-url.next
 
                 cat <<EOF > README.txt
                     This service is provided for free.
-
-                    The format of latest and history is:
-                        commit-hash date-of-commit
-
-                    The format of latest-v2 and history-v2 is:
-                        commit-hash date-of-commit date-of-advancement
-
-                    Both formats will continue to be updated, with no
-                    plans to end support for the original version.
-
-                    The history and history-v2 files will retain
-                    100000 lines of history.
 
                     If you use this service automatically please be
                     polite and follow some rules:
@@ -195,6 +201,36 @@ readonly dest="$2"
                       - please consider using my webhooks instead:
                         email me at graham at grahamc dot com or
                         message gchristensen on #nixos on Freenode.
+
+
+                    FILE NOTES
+
+                      Each format comes with two files, a "latest" file
+                      and a "history" file.
+
+                      The history files will retain 100000 lines of history.
+
+
+
+                    FORMAT NOTES
+
+                        latest, history:
+                          commit-hash date-of-commit
+
+                        latest-v2, history-v2:
+                          commit-hash date-of-commit date-of-advancement
+
+                        latest-url, history-url:
+                          channel-url date-of-advancement
+
+                      Note: "date-of-advancement" is actually the date
+                      the advancement was _detected_, and can be
+                      wildly wrong for no longer updated channels. For
+                      example, the nixos-13.10 channel's
+                      date-of-advancement is quite recent despite the
+                      channel not having updated in many years.
+
+                      All three formats will continue to be updated.
 
                     Thank you, good luck, have fun
                     Graham
