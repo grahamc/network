@@ -6,7 +6,7 @@ in
 {
   imports = [
     ./hardware.nix
-    (import ./prometheus.nix secrets)
+    (import ./prometheus.nix { inherit secrets; })
     ./sdr.nix
   ];
 

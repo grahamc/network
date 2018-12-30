@@ -18,7 +18,7 @@ let
 
   hueConfig = pkgs.writeText "config.yml" (builtins.toJSON
   {
-    inherit (secrets.hue) ip_address api_key;
+    inherit (secrets.hue_exporter_opts) ip_address api_key;
       sensors = {
         match_names = true;
         ignore_types = [
