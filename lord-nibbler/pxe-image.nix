@@ -26,7 +26,7 @@ in {
     enable = true;
     virtualHosts.default = {
       default = true;
-      root = config.services.tftpd.path;
+      root = ./webroot;
     };
 
   };
