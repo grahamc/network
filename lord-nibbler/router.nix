@@ -51,6 +51,14 @@ vlans = {
     firstoctets = "10.80.80";
     subnet = 24;
   };
+
+  roku = {
+    id = 81;
+    name = "roku";
+    interface = "enp3s0";
+    firstoctets = "10.80.81";
+    subnet = 24;
+  };
 };
 
 in {
@@ -157,22 +165,27 @@ in lib.concatStrings [
         515  # From RT AP
         # 9100 # From RT AP
       ])
+      (let
+        crossblock = builtins.attrNames vlans;
+        allowDirectional = [
+          ["nougat"      "nougat-wifi"]
+          ["nougat-wifi" "nougat"]
+          ["nougat-wifi" "ofborg"]
+          ["roku" "nougat"]
+          ["nougat" "roku"]
+        ];
+      in lib.concatStrings (lib.flatten (builtins.map
+        (src:
+          builtins.map
+            (dest:
+            if builtins.elem [src dest] allowDirectional then ""
+              else if src == dest then ""
+              else "ip46tables -I FORWARD -i ${vlans."${src}".name} -o ${vlans."${dest}".name} -j DROP\n"
+            )
+            crossblock
+        )
+        crossblock)))
       ''
-        # Don't allow segregated nodes to talk to the squishy nodes
-        ip46tables -I FORWARD -i ${vlans.nougat.name} -o ${vlans.ofborg.name} -j DROP
-        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.nougat.name} -j DROP
-
-        ip46tables -I FORWARD -i ${vlans.nougat.name} -o ${vlans.target.name} -j DROP
-        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.nougat.name} -j DROP
-
-        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.ofborg.name} -j DROP
-        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.target.name} -j DROP
-
-        ip46tables -I FORWARD -i ${vlans.target.name} -o ${vlans.hue.name} -j DROP
-        ip46tables -I FORWARD -i ${vlans.hue.name} -o ${vlans.target.name} -j DROP
-
-        ip46tables -I FORWARD -i ${vlans.ofborg.name} -o ${vlans.hue.name} -j DROP
-        ip46tables -I FORWARD -i ${vlans.hue.name} -o ${vlans.ofborg.name} -j DROP
 
 
         # allow from trusted interfaces
@@ -181,6 +194,7 @@ in lib.concatStrings [
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.ofborg.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.target.name} -o ${externalInterface} -j ACCEPT
+        ip46tables -A FORWARD -m state --state NEW -i ${vlans.roku.name} -o ${externalInterface} -j ACCEPT
 
         # allow traffic with existing state
         ip46tables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -229,6 +243,13 @@ in lib.concatStrings [
     ipv4.addresses = [{
       address = "${vlans.hue.firstoctets}.1";
       prefixLength = vlans.hue.subnet;
+    }];
+  };
+
+  networking.interfaces."${vlans.roku.name}" = {
+    ipv4.addresses = [{
+      address = "${vlans.roku.firstoctets}.1";
+      prefixLength = vlans.roku.subnet;
     }];
   };
 
@@ -289,6 +310,11 @@ in lib.concatStrings [
       id = vlans.hue.id;
     };
 
+    "${vlans.roku.name}" = {
+      interface = vlans.roku.interface;
+      id = vlans.roku.id;
+    };
+
   };
   networking.nat = {
     enable = true;
@@ -300,6 +326,7 @@ in lib.concatStrings [
       vlans.ofborg.name
       vlans.target.name
       vlans.hue.name
+      vlans.roku.name
     ];
     internalIPs = [
       "${vlans.admin-wifi.firstoctets}.0/${toString vlans.admin-wifi.subnet}"
@@ -308,6 +335,7 @@ in lib.concatStrings [
       "${vlans.ofborg.firstoctets}.0/${toString vlans.ofborg.subnet}"
       "${vlans.target.firstoctets}.0/${toString vlans.target.subnet}"
       "${vlans.hue.firstoctets}.0/${toString vlans.hue.subnet}"
+      "${vlans.roku.firstoctets}.0/${toString vlans.roku.subnet}"
     ];
 
     forwardPorts = [
@@ -348,6 +376,7 @@ in lib.concatStrings [
       vlans.ofborg.name
       vlans.target.name
       vlans.hue.name
+      vlans.roku.name
     ];
     extraConfig = ''
       subnet ${vlans.nougat.firstoctets}.0 netmask 255.255.255.0 {
@@ -404,6 +433,13 @@ in lib.concatStrings [
         option broadcast-address ${vlans.hue.firstoctets}.255;
         option routers ${vlans.hue.firstoctets}.1;
         range ${vlans.hue.firstoctets}.100 ${vlans.hue.firstoctets}.200;
+      }
+
+      subnet ${vlans.roku.firstoctets}.0 netmask 255.255.255.0 {
+        option subnet-mask 255.255.255.0;
+        option broadcast-address ${vlans.roku.firstoctets}.255;
+        option routers ${vlans.roku.firstoctets}.1;
+        range ${vlans.roku.firstoctets}.100 ${vlans.roku.firstoctets}.200;
       }
     '';
   };
