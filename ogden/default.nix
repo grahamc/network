@@ -166,6 +166,45 @@ in
     );
   };
 
+containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" = {
+    autoStart = true;
+    bindMounts.agent-token = {
+      hostPath = "/run/keys/buildkite-token-packet";
+      mountPoint = "/etc/buildkite-token-packet";
+    };
+    bindMounts.ssh-public = {
+      hostPath = "/run/keys/buildkite-ssh-public-key";
+      mountPoint = "/etc/buildkite-ssh-public";
+    };
+    bindMounts.ssh-private = {
+      hostPath = "/run/keys/buildkite-ssh-private-key";
+      mountPoint = "/etc/buildkite-ssh-private";
+    };
+    bindMounts.packet-config = {
+      hostPath = "/run/keys/packet-nixos-config";
+      mountPoint = "/etc/packet-nixos-config";
+    };
+
+    config = { pkgs, lib, ... }: {
+      services.openssh.enable = lib.mkForce false; # override standard module
+      services.prometheus.exporters.node.enable = lib.mkForce false; # override standard module
+
+      services.buildkite-agent = {
+        enable = true;
+        tokenPath = "/etc/buildkite-token-packet";
+        openssh.privateKeyPath = "/etc/buildkite-ssh-private";
+        openssh.publicKeyPath = "/etc/buildkite-ssh-public";
+        runtimePackages = [ pkgs.gzip pkgs.gnutar pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
+        hooks.environment = ''
+          export PATH=$PATH:/run/wrappers/bin/
+        '';
+        hooks.pre-command = ''
+          sleep ${builtins.toString n} # janky packet race condition
+        '';
+      };
+    };
+    };}) {} (lib.range 1 10);
+
   services.buildkite-agent = {
     enable = true;
     tokenPath = "/run/keys/buildkite-token";
@@ -180,6 +219,14 @@ in
     group = "keys";
     permissions = "0600";
   };
+
+  deployment.keys.buildkite-token-packet = {
+    text = builtins.readFile secrets.buildkite-packet.token;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+
   deployment.keys.buildkite-token = {
     text = builtins.readFile secrets.buildkite.token;
     user = config.users.extraUsers.buildkite-agent.name;
