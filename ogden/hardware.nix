@@ -26,11 +26,18 @@
       options = [ "nofail" ];
     };
 
+  #fileSystems."/media" =
+  #  { device = "rpool/graham/media";
+  #    fsType = "zfs";
+  #    options = [ "nofail" ];
+  #  };
+
   fileSystems."/media" =
-    { device = "rpool/graham/media";
+    { device = "mass/plex";
       fsType = "zfs";
       options = [ "nofail" ];
     };
+
 
 
   swapDevices = [ ];
