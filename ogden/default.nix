@@ -6,6 +6,8 @@ in
 {
   imports = [
     ./hardware.nix
+    (import ./prometheus.nix secrets)
+    ./sdr.nix
   ];
 
   nix = {
@@ -108,6 +110,8 @@ in
         3005 8324 32469 # TCP, 32400 is allowed on all interfaces
         1900 5353 32410 32412 32413 32414 # UDP
 
+        3000 # grafana
+        9090 # prometheus
 
     # Plex: Found at https://github.com/NixOS/nixpkgs/blob/release-17.03/nixos/modules/services/misc/plex.nix#L156
     32400 3005 8324 32469

@@ -1,6 +1,29 @@
 { secrets }:
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
+  prometheus-surfboard-exporter = pkgs.callPackage ({ stdenv, buildGoPackage, fetchFromGitHub }:
+    buildGoPackage rec {
+      name = "surfboard_exporter-${version}";
+      version = "2.0.0";
+
+      goPackagePath = "github.com/ipstatic/surfboard_exporter";
+
+      src = fetchFromGitHub {
+        rev = version;
+        owner = "ipstatic";
+        repo = "surfboard_exporter";
+        sha256 = "11qms26648nwlwslnaflinxcr5rnp55s908rm1qpnbz0jnxf5ipw";
+      };
+
+      meta = with stdenv.lib; {
+        description = "Arris Surfboard signal metrics exporter";
+        homepage = https://github.com/ipstatic/surfboard_exporter;
+        license = licenses.mit;
+        maintainers = with maintainers; [ disassembler ];
+        platforms = platforms.unix;
+      };
+    }) {};
+
   externalInterface = "enp1s0";
 
 vlans = {
@@ -10,7 +33,6 @@ vlans = {
     interface = "enp2s0";
     firstoctets = "10.5.3";
     subnet = 24;
-
   };
 
   admin-wifi = {
@@ -467,4 +489,26 @@ in lib.concatStrings [
     openPorts = false;
   };
 
+  services.prometheus.exporters.unifi = {
+    enable = true;
+    inherit (secrets.unifi_exporter_opts) unifiAddress unifiInsecure
+      unifiUsername unifiPassword;
+  };
+
+
+  systemd.services.prometheus-surfboard-exporter = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig = {
+      Restart = "always";
+      PrivateTmp =  true;
+      WorkingDirectory = "/tmp";
+      ExecStart = ''
+        ${prometheus-surfboard-exporter}/bin/surfboard_exporter \
+          --web.listen-address 0.0.0.0:9239 \
+          --modem-address 192.168.100.1 \
+          --timeout 15s
+      '';
+    };
+  };
 }

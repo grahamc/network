@@ -17,12 +17,6 @@ in {
     };
 
     networking = {
-      extraHosts = ''
-        # 2604:6000:e6cf:1901::1 lord-nibbler
-        2604:6000:e6c2:f501:8e89:a5ff:fe10:53f0 ogden
-        195.201.26.67 ofborg-evaluator-0
-      '';
-
       firewall = {
         enable = true;
         allowedTCPPorts = [ 22 ];
@@ -74,6 +68,22 @@ in {
     '';
     environment.etc.host-nix-channel.source = pkgs.path;
 
+    services.prometheus.exporters.node = {
+      enable = true;
+      enabledCollectors = [
+        # "netclass" "exec" "edec" "boottime"
+        "arp" "bonding" "conntrack" "cpu" "diskstats"
+        "entropy" # "exec"
+        "filefd" "filesystem" "hwmon"
+        "loadavg" "mdadm" "meminfo"
+        "netdev" "netstat"
+        "sockstat" "systemd" "textfile" "time" "vmstat" "wifi" "zfs"
+      ];
+      extraFlags = [
+        "--collector.textfile.directory=/var/lib/prometheus-node-exporter-text-files"
+        ""
+      ];
+    };
 
     system.activationScripts.node-exporter-system-version = ''
       mkdir -pm 0775 /var/lib/prometheus-node-exporter-text-files
