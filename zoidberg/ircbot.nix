@@ -1,7 +1,7 @@
 { pkgs, ... }:
 let
   src = import ./gcofborgpkg.nix;
-  githubgateway = import ./../../github-to-irc/default.nix { inherit pkgs; };
+  githubgateway = import ./../../../samueldr/github-to-irc/default.nix { inherit pkgs; };
 
   ircservice = name: bin: cfg: {
     "ircbot-${name}" = {
