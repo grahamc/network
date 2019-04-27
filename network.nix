@@ -1,6 +1,8 @@
 let
   secrets = import ./secrets.nix;
 in {
+  network.enableRollback = true;
+
   zoidberg = { ... }: {
     imports = [
       (import ./zoidberg { inherit secrets; })

@@ -368,6 +368,7 @@ in lib.concatStrings [
     forwardPorts = [
       { destination = "10.5.3.105:32400"; proto = "tcp"; sourcePort = 32400; }
       { destination = "10.5.3.105:22"; proto = "tcp"; sourcePort = 22; }
+      { destination = "10.5.3.105:41741"; proto = "udp"; sourcePort = 41741; }
     ];
   };
 

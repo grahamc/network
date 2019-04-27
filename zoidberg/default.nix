@@ -22,6 +22,8 @@ let
   };
 in { pkgs, ... }: {
   imports = [
+    ./wireguard.nix
+    ./everyaws.nix
     (import ./packet-type-0.nix { inherit secrets; })
     ./ircbot.nix
     (import ./events.nix.nix { inherit secrets; })
@@ -95,6 +97,20 @@ in { pkgs, ... }: {
         };
       };
     }
+
+    {
+      users.users.r13y = {
+        description = "Reproducibility";
+        home = "/var/lib/r13y";
+        createHome = true;
+        group = "r13y";
+        uid = 404;
+        openssh.authorizedKeys.keyFiles = [ secrets.r13y.public ];
+        shell = pkgs.bash;
+      };
+      users.groups.r13y.gid = 404;
+    }
+
   ];
 
   networking = {
@@ -224,6 +240,19 @@ in { pkgs, ... }: {
             autoindex on;
           '';
         };
+
+        "r13y.com" = defaultVhostCfg // {
+          root = "/var/lib/nginx/r13y/r13y.com";
+          enableACME = true;
+          forceSSL = true;
+        };
+
+        "www.r13y.com" = defaultVhostCfg // {
+          enableACME = true;
+          forceSSL = true;
+          globalRedirect = "r13y.com";
+        };
+
 
         "monitoring.nix.gsc.io" = defaultVhostCfg // {
           enableACME = true;
@@ -372,6 +401,23 @@ in { pkgs, ... }: {
           if ! test -L /home/grahamc/gsc.io; then
             ln -s /var/lib/nginx/grahamc/gsc.io /home/grahamc/gsc.io
           fi
+
+          mkdir -p /var/lib/nginx/grahamc/r13y.com
+          chown nginx:nginx /var/lib/nginx/grahamc/
+          chown grahamc:users /var/lib/nginx/grahamc/r13y.com
+          if ! test -L /home/grahamc/r13y.com; then
+            ln -s /var/lib/nginx/grahamc/r13y.com /home/grahamc/r13y.com
+          fi
+
+
+          mkdir -p /var/lib/nginx/r13y/r13y.com
+          chown nginx:nginx /var/lib/nginx/r13y/
+          chown r13y:users /var/lib/nginx/r13y/r13y.com
+          if ! test -L /var/lib/r13y/r13y.com; then
+            ln -s /var/lib/nginx/r13y/r13y.com /var/lib/r13y/r13y.com
+          fi
+
+
 
           mkdir -p /var/lib/nginx/nix-channel-monitor/monitor/public
           chown nginx:nginx /var/lib/nginx/grahamc/

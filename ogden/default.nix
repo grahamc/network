@@ -6,6 +6,7 @@ in
 {
   imports = [
     ./hardware.nix
+    ./wireguard.nix
     (import ./prometheus.nix { inherit secrets; })
     ./sdr.nix
   ];
@@ -166,7 +167,7 @@ in
     );
   };
 
-containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" = {
+  containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" = {
     autoStart = true;
     bindMounts.agent-token = {
       hostPath = "/run/keys/buildkite-token-packet";
@@ -180,12 +181,22 @@ containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" =
       hostPath = "/run/keys/buildkite-ssh-private-key";
       mountPoint = "/etc/buildkite-ssh-private";
     };
+    bindMounts.r13y-ssh-private = {
+      hostPath = "/run/keys/r13y-ssh-private-key";
+      mountPoint = "/etc/r13y-ssh-private";
+    };
     bindMounts.packet-config = {
       hostPath = "/run/keys/packet-nixos-config";
       mountPoint = "/etc/packet-nixos-config";
     };
 
     config = { pkgs, lib, ... }: {
+      programs.ssh.knownHosts = [
+        {
+          hostNames = [ "r13y.com" "147.75.97.237" ];
+          publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHG+C2l5eICNnyuhcyShKU38vw+hsV0XNyeBRVJgyM7";
+        }
+      ];
       services.openssh.enable = lib.mkForce false; # override standard module
       services.prometheus.exporters.node.enable = lib.mkForce false; # override standard module
 
@@ -194,13 +205,14 @@ containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" =
         tokenPath = "/etc/buildkite-token-packet";
         openssh.privateKeyPath = "/etc/buildkite-ssh-private";
         openssh.publicKeyPath = "/etc/buildkite-ssh-public";
-        runtimePackages = [ pkgs.gzip pkgs.gnutar pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
+        runtimePackages = [ pkgs.xz pkgs.gzip pkgs.gnutar pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
         hooks.environment = ''
           export PATH=$PATH:/run/wrappers/bin/
         '';
-        hooks.pre-command = ''
-          sleep ${builtins.toString n} # janky packet race condition
-        '';
+        #hooks.pre-command = ''
+        #  sleep ${builtins.toString n} # janky packet race condition
+        #'';
+        extraConfig = ''git-clean-flags=-n'';
       };
     };
     };}) {} (lib.range 1 10);
@@ -245,5 +257,10 @@ containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" =
     group = "keys";
     permissions = "0600";
   };
-
+  deployment.keys.r13y-ssh-private-key = {
+    text = builtins.readFile secrets.r13y.private;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
 }

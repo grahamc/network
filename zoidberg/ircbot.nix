@@ -39,9 +39,6 @@ in {
       (ircservice "gateway"
         "${src.ircbot}/bin/gateway"
         ./../../ircbot/ofborg/config.irc.json) //
-      (ircservice "factoids"
-        "${src.ircbot}/bin/factoids"
-        "${./../../ircbot/ofborg/config.irc.json} ${./../../ircbot/ofborg/factoids.toml}") //
       (ircservice "github-to-irc"
         "${githubgateway}/bin/github-to-irc"
         "${./../../ircbot/ofborg/config.irc.json}") //
