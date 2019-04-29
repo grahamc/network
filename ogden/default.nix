@@ -9,6 +9,7 @@ in
     ./wireguard.nix
     (import ./prometheus.nix { inherit secrets; })
     ./sdr.nix
+    (import ./dns.nix { inherit secrets; })
   ];
 
   nix = {
