@@ -380,8 +380,6 @@ in lib.concatStrings [
          AdvSendAdvert on;
          prefix ::/64
          {
-              AdvOnLink on;
-              AdvAutonomous on;
          };
       };
 
@@ -390,112 +388,21 @@ in lib.concatStrings [
          AdvSendAdvert on;
          prefix ::/64
          {
-              AdvOnLink on;
-              AdvAutonomous on;
          };
       };
     '';
   };
 
   networking.dhcpcd.extraConfig = ''
-  xidhwaddr
-  noipv6rs
-  #debug
-  interface enp1s0
-    #ipv6rs
-    iaid 10
-    #ia_na 1
-    ia_pd 2/::/56 enp2s0/2 nougatwifi/3
-  '';
-
-  /*if true then ''
-noipv6rs;
-debug;
-
-interface enp1s0 {
-        ipv6rs;
-        send ia-na 1;
-        send ia-pd 2;
-};
-
-
-id-assoc pd 2 {
-        prefix-interface enp2s0 {
-                sla-id 0;
-                ifid 1;
-                sla-len 16;
-        };
-        prefix-interface nougatwifi {
-#               sla-id 0;
-                sla-id 15;
-                sla-len 16;
-        };
-};
-
-id-assoc na 1 {
-
-};
-
-  ''
- else ''
-    interface ${externalInterface} {
+    xidhwaddr
+    noipv6rs
+    debug
+    interface enp1s0
+      #ipv6rs
+      iaid 10
       ia_na 1
-      ia_pd 2
-    };
-
-    id-assoc na 1 {};
-
-    id-assoc pd 2 {
-      prefix ::/52 infinity;
-
-      prefix-interface lo {
-        sla-id 0;
-        sla-len 0;
-      };
-
-      prefix-interface ${vlans.nougat.name} {
-        sla-id 1;
-        sla-len 8;
-      };
-
-      prefix-interface ${vlans.nougat-wifi.name} {
-        sla-id 2;
-        sla-len 8;
-      };
-    };
-
-  '';*/
-  /*
-  id-assoc na 2 {};
-
-    id-assoc pd 3 {
-      prefix ::/56 infinity;
-
-      prefix-interface lo {
-        sla-id 0;
-        sla-len 0;
-      };
-
-      prefix-interface ${vlans.nougat.name} {
-        sla-id 1;
-        sla-len 8;
-      };
-
-      prefix-interface ${vlans.nougat-wifi.name} {
-        sla-id 2;
-        sla-len 8;
-      };
-    };
-
-    #noipv6rs
-    #interface ${externalInterface}
-    #ia_na 1
-    #ia_na 2
-    #ia_na 3
-    #ia_pd 1/::/56 ${vlans.nougat.name}/1/64  ${vlans.nougat-wifi.name}/2/64
-
+      ia_pd 2/::/56 enp2s0/2 nougatwifi/3
   '';
-*/
 
   services.dhcpd4 = {
     enable = true;
