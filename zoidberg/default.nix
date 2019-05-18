@@ -267,48 +267,6 @@ in { pkgs, ... }: {
         #  locations = (vhostPHPLocations pkgs root);
         #};
 
-        "grahamc.com" = defaultVhostCfg // rec {
-          enableACME = true;
-          forceSSL = true;
-          root = pkgs.callPackage ../../grahamc.github.com {};
-          locations."/" = {
-            index = "index.html index.xml";
-            tryFiles = "$uri $uri/ $uri.html $uri.xml =404";
-          };
-        };
-
-        "docbook.rocks" = defaultVhostCfg // rec {
-          enableACME = true;
-          forceSSL = true;
-          root = pkgs.callPackage ../../docbook.rocks {};
-          locations."/" = {
-            index = "index.html index.xml";
-            tryFiles = "$uri $uri/ $uri.html $uri.xml =404";
-          };
-
-          extraConfig = ''
-            error_log syslog:server=unix:/dev/log;
-            access_log syslog:server=unix:/dev/log combined_host;
-
-            etag off;
-            add_header ETag ${builtins.replaceStrings ["/nix/store/"] [""] (builtins.toString root)};
-            add_header Last-Modified "";
-          '';
-        };
-
-
-        "www.docbook.rocks" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          globalRedirect = "docbook.rocks";
-        };
-
-        "www.grahamc.com" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          globalRedirect = "grahamc.com";
-        };
-
         "www.gsc.io" = defaultVhostCfg // {
           enableACME = true;
           forceSSL = true;
