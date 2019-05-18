@@ -45,7 +45,7 @@ in {
         "${./../../ircbot/ofborg/config.irc.json}") //
       (ircservice "pijul-nest-to-irc"
         "${pijulnestgateway}/bin/nest-to-irc"
-        "${../../../nest.pijul.com/grahamc/nest-to-irc/url}") //
+        "${../../../../nest.pijul.com/grahamc/nest-to-irc/url}") //
       {};
 
   };

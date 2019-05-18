@@ -10,12 +10,21 @@ in
     (import ./prometheus.nix { inherit secrets; })
     ./sdr.nix
     (import ./dns.nix { inherit secrets; })
+    # possibly breaking r13y.com # (import ../../../andir/local-nix-cache/module.nix)
   ];
+
+  #local-nix-cache.server = {
+  #  enable = true;
+  #};
+
+  systemd.tmpfiles.rules = [''
+    R /tmp/nix-build-* - - - 1d -
+  ''];
 
   nix = {
       gc = {
         automatic = true;
-        dates = "8:44";
+        dates = "8:05";
 
         options = let
           freedGb = 300;
@@ -105,6 +114,8 @@ in
   ];
 
   networking.firewall.allowedTCPPorts = [
+    8083 # andir/local-nix-cache
+
         config.services.netatalk.port
         5353 # avahi
 
