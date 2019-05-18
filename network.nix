@@ -7,6 +7,18 @@ in {
     imports = [
       (import ./zoidberg { inherit secrets; })
     ];
+    boot.loader.grub.memtest86.enable = true;
+  };
+
+  flexo = { ... }: {
+    deployment = {
+      targetHost = "147.75.105.137";
+    };
+
+    imports = [
+      (import ./flexo { inherit secrets; })
+    ];
+    boot.loader.grub.memtest86.enable = true;
   };
 
   lord-nibbler = { ... }: {
