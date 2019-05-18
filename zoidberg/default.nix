@@ -260,12 +260,12 @@ in { pkgs, ... }: {
           root = "/var/lib/nginx/grahamc/gsc.io/public";
         };
 
-        "ihavenoideawhatimdoing.dog" = defaultVhostCfg // rec {
-          enableACME = true;
-          forceSSL = true;
-          root = pkgs.callPackage ../../ihavenoideawhatimdoing.dog {};
-          locations = (vhostPHPLocations pkgs root);
-        };
+        #"ihavenoideawhatimdoing.dog" = defaultVhostCfg // rec {
+        #  enableACME = true;
+        #  forceSSL = true;
+        #  root = pkgs.callPackage ../../ihavenoideawhatimdoing.dog {};
+        #  locations = (vhostPHPLocations pkgs root);
+        #};
 
         "grahamc.com" = defaultVhostCfg // rec {
           enableACME = true;
