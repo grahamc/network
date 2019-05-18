@@ -373,7 +373,7 @@ in lib.concatStrings [
   };
 
   services.radvd = {
-    enable = true;
+    enable = false; # ipv6 is just ... broken, man.
     config = ''
       interface ${vlans.nougat.name}
       {
