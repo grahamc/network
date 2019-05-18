@@ -2,7 +2,7 @@
 let
   src = import ./gcofborgpkg.nix;
   githubgateway = import ./../../../samueldr/github-to-irc/default.nix { inherit pkgs; };
-  pijulnestgateway = pkgs.callPackage ../../../nest.pijul.com/grahamc/nest-to-irc { };
+  pijulnestgateway = pkgs.callPackage ../../../../nest.pijul.com/grahamc/nest-to-irc { };
 
   ircservice = name: bin: cfg: {
     "ircbot-${name}" = {
