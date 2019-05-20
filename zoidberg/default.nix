@@ -25,7 +25,6 @@ in { pkgs, ... }: {
     ./wireguard.nix
     ./everyaws.nix
     (import ./packet-type-0.nix { inherit secrets; })
-    (import ./events.nix.nix { inherit secrets; })
   ];
 
   networking = {
