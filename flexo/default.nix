@@ -6,6 +6,7 @@
     ./hardware.nix
     ./hound.nix
     ./grahams-websites.nix
+    (import ./rabbitmq.nix { inherit secrets; })
     ./wireguard.nix
   ];
 

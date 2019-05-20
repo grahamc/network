@@ -23,7 +23,8 @@
 
   hardware.enableAllFirmware = true;
 
-  networking.hostName = "flexo";
+  networking.hostName = "flexo.gsc.io";
+  networking.domain = "gsc.io";
   networking.dhcpcd.enable = false;
   networking.defaultGateway = {
     address =  "147.75.105.136";

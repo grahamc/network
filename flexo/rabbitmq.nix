@@ -1,60 +1,36 @@
 { secrets }:
 { pkgs, config, ... }:
 let
-  defaultVhostCfg = import ./default-vhost-config.nix;
   rabbit_tls_port = 5671;
-  cert_dir = "${config.security.acme.directory}/events.nix.gsc.io";
+  cert_dir = "${config.security.acme.directory}/flexo.gsc.io";
+in {
+  networking = {
+    firewall = {
+      allowedTCPPorts = [ 80 443 5671 15671 ];
+      extraCommands = ''
+        # epmd
+        ip46tables -A nixos-fw -i wg0 -p tcp \
+          --dport 4369 -j nixos-fw-accept
 
-  vhostPHPLocations = pkgs: root: {
-    "/" = {
-      index = "index.php index.html";
+        # inter-node chat
+        ip46tables -A nixos-fw -i wg0 -p tcp \
+          --dport 25672 -j nixos-fw-accept
 
-      extraConfig = ''
-        try_files $uri $uri/ /index.php$is_args$args;
-      '';
-    };
+        # CLI chat
+        ip46tables -A nixos-fw -i wg0 -p tcp \
+          --dport 35672:35682 -j nixos-fw-accept
 
-    "~ \.php$" = {
-      extraConfig = ''
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/run/php-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME ${root}/$fastcgi_script_name;
-        include ${pkgs.nginx}/conf/fastcgi_params;
+        # web interface
+        ip46tables -A nixos-fw -i wg0 -p tcp \
+          --dport 15672 -j nixos-fw-accept
       '';
     };
   };
 
-in {
-
-    networking = {
-      firewall = {
-        allowedTCPPorts = [ 5671 15671 ];
-        extraCommands = ''
-          # epmd
-          ip46tables -A nixos-fw -i wg0 -p tcp \
-            --dport 4369 -j nixos-fw-accept
-
-          # inter-node chat
-          ip46tables -A nixos-fw -i wg0 -p tcp \
-            --dport 25672 -j nixos-fw-accept
-
-          # CLI chat
-          ip46tables -A nixos-fw -i wg0 -p tcp \
-            --dport 35672:35682 -j nixos-fw-accept
-
-          # web interface
-          ip46tables -A nixos-fw -i wg0 -p tcp \
-            --dport 15672 -j nixos-fw-accept
-        '';
-      };
-
-      extraHosts = ''
-        127.0.0.1 zoidberg
-      '';
+  security.acme.certs."flexo.gsc.io" = {
+    extraDomains = {
+      "events.nix.gsc.io" = null;
     };
-
-  security.acme.certs."events.nix.gsc.io" = {
     plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
     group = "rabbitmq";
     allowKeysForGroup = true;
@@ -63,7 +39,7 @@ in {
   services = {
     nginx = {
       virtualHosts = {
-        "events.nix.gsc.io" = defaultVhostCfg // {
+        "flexo.gsc.io" = {
           enableACME = true;
           forceSSL = true;
         };
