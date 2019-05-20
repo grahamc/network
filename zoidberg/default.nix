@@ -230,29 +230,6 @@ in { pkgs, ... }: {
           globalRedirect = "r13y.com";
         };
 
-
-        "monitoring.nix.gsc.io" = defaultVhostCfg // {
-          enableACME = true;
-          forceSSL = true;
-          locations = {
-            "/".proxyPass = "http://127.0.0.1:3000/";
-          };
-        };
-
-        "webhook.nix.gsc.io" = defaultVhostCfg // (let
-          src  = import ./gcofborgpkg.nix;
-        in {
-          root = "${src.ofborg.php}/web";
-          enableACME = true;
-          forceSSL = true;
-
-          extraConfig = ''
-            rewrite  ^/(\d+)$ index.php?n=$1 last;
-          '';
-
-          locations = (vhostPHPLocations pkgs "${src.ofborg.php}/web");
-        });
-
         "gsc.io" = defaultVhostCfg // {
           #enableACME = true;
           #forceSSL = true;
