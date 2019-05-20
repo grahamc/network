@@ -10,6 +10,7 @@
     ./wireguard.nix
     ./github-webhook.nix
     (import ./nix-channel-monitor { inherit secrets; })
+    (import ./r13y.nix { inherit secrets; })
   ];
 
   options.security.acme.certs = lib.mkOption {
