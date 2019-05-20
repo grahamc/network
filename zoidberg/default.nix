@@ -25,7 +25,6 @@ in { pkgs, ... }: {
     ./wireguard.nix
     ./everyaws.nix
     (import ./packet-type-0.nix { inherit secrets; })
-    ./ircbot.nix
     (import ./events.nix.nix { inherit secrets; })
     {
       users.users.nix-channel-monitor = {

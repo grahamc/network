@@ -2,6 +2,7 @@
 { lib, ... }:
 {
   imports = [
+    ./ircbot.nix
     ./hardware.nix
     ./hound.nix
     ./grahams-websites.nix

@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  src = import ./gcofborgpkg.nix;
+  src = import ./../../ircbot/ofborg {};
   githubgateway = import ./../../../samueldr/github-to-irc/default.nix { inherit pkgs; };
   pijulnestgateway = pkgs.callPackage ../../../../nest.pijul.com/grahamc/nest-to-irc { };
 
