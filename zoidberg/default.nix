@@ -129,15 +129,6 @@ in { pkgs, ... }: {
         #  enableSSL = true;
         #};
 
-        "channels.nix.gsc.io" = defaultVhostCfg // {
-          root = "/var/lib/nginx/nix-channel-monitor/monitor/public";
-          enableACME = true;
-          forceSSL = true;
-          locations."/".extraConfig = ''
-            autoindex on;
-          '';
-        };
-
         "nix.gsc.io" = defaultVhostCfg // {
           root = ./nix/webroot;
           enableACME = true;
