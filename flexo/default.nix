@@ -9,6 +9,7 @@
     (import ./rabbitmq.nix { inherit secrets; })
     ./wireguard.nix
     ./github-webhook.nix
+    (import ./nix-channel-monitor { inherit secrets; })
   ];
 
   options.security.acme.certs = lib.mkOption {
