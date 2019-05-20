@@ -3,6 +3,11 @@ let
   privatekey = config.networking.wireguard.interfaces.wg0.privateKeyFile;
   publickey = "${dirOf privatekey}/public";
 in {
+  networking.extraHosts = ''
+    10.10.2.10 petunia
+    10.10.2.25 flexo
+  '';
+
   networking.firewall.allowedUDPPorts = [ 51820 ];
   networking.wireguard.interfaces.wg0 = {
     ips = [ "10.10.2.5/24" ];
@@ -24,6 +29,13 @@ in {
         # iPhone
         publicKey = "kG7wx7RSayTq7xEhsuCGCSn4pVXTu53Y5Ifb9F74fDs=";
         allowedIPs = [ "10.10.2.20/32" ];
+      }
+      {
+        # flexo
+        publicKey = "4mxZbkU/uCDSFW0gQQAw05lGDy7CaJRpVs8nERWS+Uk=";
+        allowedIPs = [ "10.10.2.25/32" ];
+        endpoint = "flexo.gsc.io:5820";
+        persistentKeepalive = 25;
       }
     ];
   };

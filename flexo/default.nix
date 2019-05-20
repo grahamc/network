@@ -5,6 +5,7 @@
     ./hardware.nix
     ./hound.nix
     ./grahams-websites.nix
+    ./wireguard.nix
   ];
 
   options.security.acme.certs = lib.mkOption {
