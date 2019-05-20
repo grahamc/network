@@ -201,14 +201,6 @@ in { pkgs, ... }: {
           if ! test -L /home/grahamc/gsc.io; then
             ln -s /var/lib/nginx/grahamc/gsc.io /home/grahamc/gsc.io
           fi
-
-          mkdir -p /var/lib/nginx/nix-channel-monitor/monitor/public
-          chown nginx:nginx /var/lib/nginx/grahamc/
-          chown nix-channel-monitor:nix-channel-monitor /var/lib/nginx/nix-channel-monitor/monitor
-          if ! test -L /var/lib/nix-channel-monitor/monitor; then
-            ln -s /var/lib/nginx/nix-channel-monitor/monitor /var/lib/nix-channel-monitor/monitor
-          fi
-          chown nix-channel-monitor:nix-channel-monitor /var/lib/nginx/nix-channel-monitor/monitor/public
         '';
       };
     };
