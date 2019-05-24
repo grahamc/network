@@ -4,6 +4,7 @@ let
   publickey = "${dirOf privatekey}/public";
 in {
   networking.extraHosts = ''
+    10.10.2.15 ogden
     10.10.2.10 petunia
     10.10.2.5  zoidberg
   '';
@@ -27,6 +28,13 @@ in {
         endpoint = "zoidberg.gsc.io:5820";
         persistentKeepalive = 25;
       }
+      {
+        # ogden
+        publicKey = config.about.ogden.wireguard_public_keys.wg0;
+        allowedIPs = [ "10.10.2.15/32" ];
+        persistentKeepalive = 25;
+      }
+
     ];
   };
 

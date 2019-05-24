@@ -1,0 +1,7 @@
+{
+    "ssh_host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHICIvUL8AAPDjwP0wUdYADwWSWBieS8iTgNPVa+fynN root@nixos",
+    "ssh_root_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsBEaKyvlXvVGjMT7LEhYs87kVNiTpeVtWNtjnElSSg root@ogden",
+    "wireguard_public_keys": {
+        "wg0": "gNU592zxr8y+kuaH3+aGuwEhRmwA+FFoBckOATFr7U0="
+    }
+}

@@ -1,0 +1,4 @@
+{
+    "ssh_host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKTuyQLzbDV8bK6ug+VSEM9AGfLtHxDV8zaiX0tsG2cD root@nixos",
+    "wireguard_public_keys": {}
+}

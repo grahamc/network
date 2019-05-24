@@ -1,6 +1,9 @@
 let
   secrets = import ./secrets.nix;
 in {
+  defaults = {
+    about = import ./intake;
+  };
   network.enableRollback = true;
 
   zoidberg = { ... }: {

@@ -2,6 +2,7 @@
 { config, lib, pkgs, ... }:
 let
   internalInterfaces = [ "enp4s0" ];
+  hostConfig = config;
 in
 {
   imports = [
@@ -205,8 +206,8 @@ in
     config = { pkgs, lib, ... }: {
       programs.ssh.knownHosts = [
         {
-          hostNames = [ "r13y.com" "147.75.97.237" ];
-          publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHG+C2l5eICNnyuhcyShKU38vw+hsV0XNyeBRVJgyM7";
+          hostNames = [ "r13y.com" "147.75.105.137" ];
+          publicKey = hostConfig.about.flexo.ssh_host_key;
         }
       ];
       services.openssh.enable = lib.mkForce false; # override standard module

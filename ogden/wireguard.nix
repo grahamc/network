@@ -22,6 +22,13 @@ in {
         endpoint = "gsc.io:51820";
         persistentKeepalive = 25;
       }
+      {
+        # flexo
+        publicKey = config.about.flexo.wireguard_public_keys.wg0;
+        allowedIPs = [ "10.10.2.25/32" ];
+        endpoint = "flexo.gsc.io:51820";
+        persistentKeepalive = 25;
+      }
     ];
   };
 

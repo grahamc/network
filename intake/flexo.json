@@ -1,0 +1,6 @@
+{
+    "ssh_host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINZJC4F2C2DMZi1fonqMuWB1GdQR0bn3WRaEI3JYnE4d root@Flexo",
+    "wireguard_public_keys": {
+        "wg0": "4mxZbkU/uCDSFW0gQQAw05lGDy7CaJRpVs8nERWS+Uk="
+    }
+}
