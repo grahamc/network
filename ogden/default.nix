@@ -19,7 +19,7 @@ in
   #};
 
   systemd.tmpfiles.rules = [''
-    R /tmp/nix-build-* - - - 1d -
+    e /tmp/nix-build-* - - - 1d -
   ''];
 
   nix = {
@@ -182,6 +182,11 @@ in
 
   containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" = {
     autoStart = true;
+    bindMounts.foo = {
+      hostPath = "/run/keys/buildkite-token-packet";
+      mountPoint = "/etc/buildkite-token-packet-bar";
+    };
+
     bindMounts.agent-token = {
       hostPath = "/run/keys/buildkite-token-packet";
       mountPoint = "/etc/buildkite-token-packet";
@@ -202,18 +207,31 @@ in
       hostPath = "/run/keys/packet-nixos-config";
       mountPoint = "/etc/packet-nixos-config";
     };
+    bindMounts.aarch64-ssh-private = {
+      hostPath = "/run/keys/aarch64-ssh-private-key";
+      mountPoint = "/etc/aarch64-ssh-private";
+    };
+    bindMounts.aarch64-build-cfg = {
+      hostPath = "/run/keys/aarch64-build-cfg";
+      mountPoint = "/etc/aarch64-build-cfg";
+    };
 
     config = { pkgs, lib, ... }: {
       programs.ssh.knownHosts = [
         {
-          hostNames = [ "r13y.com" "147.75.105.137" ];
+          hostNames = [ "flexo.gsc.io" "r13y.com" "147.75.105.137" ];
           publicKey = hostConfig.about.flexo.ssh_host_key;
+        }
+        {
+          hostNames = [ "147.75.79.198" ];
+          publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDCo+z5d8C6SpCyvC8KAPMAcMEtd5J74tRsk+7sm2KgD";
         }
       ];
       services.openssh.enable = lib.mkForce false; # override standard module
       services.prometheus.exporters.node.enable = lib.mkForce false; # override standard module
 
       services.buildkite-agent = {
+        meta-data = "r13y=true";
         enable = true;
         tokenPath = "/etc/buildkite-token-packet";
         openssh.privateKeyPath = "/etc/buildkite-ssh-private";
@@ -221,6 +239,7 @@ in
         runtimePackages = [ pkgs.xz pkgs.gzip pkgs.gnutar pkgs.gitAndTools.git-crypt pkgs.nix pkgs.bash ];
         hooks.environment = ''
           export PATH=$PATH:/run/wrappers/bin/
+          export NIX_PATH=nixpkgs=${pkgs.path}
         '';
         #hooks.pre-command = ''
         #  sleep ${builtins.toString n} # janky packet race condition
@@ -244,7 +263,6 @@ in
     group = "keys";
     permissions = "0600";
   };
-
   deployment.keys.buildkite-token-packet = {
     text = builtins.readFile secrets.buildkite-packet.token;
     user = config.users.extraUsers.buildkite-agent.name;
@@ -266,6 +284,20 @@ in
   };
   deployment.keys.buildkite-ssh-private-key = {
     text = builtins.readFile secrets.buildkite.openssh-private-key;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+
+
+  deployment.keys.aarch64-build-cfg = {
+    text = builtins.readFile secrets.buildkite.aarch64-build-cfg;
+    user = config.users.extraUsers.buildkite-agent.name;
+    group = "keys";
+    permissions = "0600";
+  };
+  deployment.keys.aarch64-ssh-private-key = {
+    text = builtins.readFile secrets.aarch64.private;
     user = config.users.extraUsers.buildkite-agent.name;
     group = "keys";
     permissions = "0600";

@@ -1,5 +1,17 @@
 { pkgs, config, ... }:
 let
+  networks = {
+    wg0 = {
+      prefix = 24;
+      privateKeyFile = "/etc/wireguard/private";
+      nodes = {
+        ogden   = { ip = "10.10.2.15"; };
+        petunia = { ip = "10.10.2.10"; };
+        flexo   = { ip = "10.10.2.25"; };
+      };
+    };
+  };
+
   privatekey = config.networking.wireguard.interfaces.wg0.privateKeyFile;
   publickey = "${dirOf privatekey}/public";
 in {
@@ -36,16 +48,9 @@ in {
         allowedIPs = [ "10.10.2.15/32" ];
         persistentKeepalive = 25;
       }
-      {
-        # elzar
-        publicKey = "/5HDPKbtNvC/KxqBrUCnPfLVme8scxLJn9Zs2quXLl0=";
-        allowedIPs = [ "10.10.2.50/32" ];
-        persistentKeepalive = 25;
-      }
+
     ];
   };
-
-  deployment.keys.sphalerite-wg.text = "23f8zfwdCKtWc/w9gS2qGpqePDfo9YJC9gIT2Me9TFc=";
 
   systemd.services.wireguard-wg0-key = {
     enable = true;

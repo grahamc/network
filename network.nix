@@ -6,12 +6,12 @@ in {
   };
   network.enableRollback = true;
 
-  zoidberg = { ... }: {
-    imports = [
-      (import ./zoidberg { inherit secrets; })
-    ];
-    boot.loader.grub.memtest86.enable = true;
-  };
+  #zoidberg = { ... }: {
+  #  imports = [
+  #    (import ./zoidberg { inherit secrets; })
+  #  ];
+  #  boot.loader.grub.memtest86.enable = true;
+  #};
 
   flexo = { ... }: {
     deployment = {
@@ -36,8 +36,9 @@ in {
 
   ogden = { ... }: {
     deployment = {
-      targetHost = "10.5.3.105"; # if true then "10.5.3.1" else "67.246.21.246";
+      targetHost = "10.10.2.15"; # wireguard!
     };
+    boot.loader.grub.memtest86.enable = true;
 
     imports = [
       (import ./ogden { inherit secrets; })

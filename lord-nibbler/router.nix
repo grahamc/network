@@ -487,6 +487,7 @@ in lib.concatStrings [
   services.unifi = {
     enable = true;
     openPorts = false;
+    # unifiPackage = pkgs.unifiStable;
   };
 
   services.prometheus.exporters.unifi = {
@@ -511,4 +512,6 @@ in lib.concatStrings [
       '';
     };
   };
+
+  services.avahi.enable = true;
 }

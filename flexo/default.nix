@@ -1,8 +1,10 @@
 { secrets }:
-{ lib, ... }:
+{ config, lib, ... }:
 {
   imports = [
     ./ircbot.nix
+    ./everyaws.nix
+    ./periodic-reminders.nix
     ./hardware.nix
     ./hound.nix
     ./grahams-websites.nix
@@ -11,6 +13,10 @@
     ./github-webhook.nix
     (import ./nix-channel-monitor { inherit secrets; })
     (import ./r13y.nix { inherit secrets; })
+    (import ./aarch64-netboot.nix { inherit secrets; })
+    ./irc.nix
+    ./gsc.io.nix
+    (import ./bgp.nix { inherit secrets; })
   ];
 
   options.security.acme.certs = lib.mkOption {
@@ -49,5 +55,20 @@
       '';
     };
 
+    services.znapzend = {
+      enable = true;
+      autoCreation = true;
+      pure = true;
+      zetup.npool = {
+        enable = true;
+        plan = "1d=>1h,1m=>1d,1y=>1m";
+        recursive = true;
+        timestampFormat = "%Y-%m-%d--%H%M%SZ";
+        destinations.ogden = {
+          host = "ogden";
+          dataset = "mass/${config.networking.hostName}";
+        };
+      };
+    };
   };
 }
