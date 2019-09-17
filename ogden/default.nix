@@ -141,6 +141,10 @@ in
   users = {
     groups.writemedia = {};
     extraUsers = {
+      root.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINT2IAcpePtxrnk9XiXRRkInvvXm6X00mYFd3rpMSBNW root@Petunia"
+      ];
+
       emilyc = {
         isNormalUser = true;
         uid = 1002;
