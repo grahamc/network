@@ -214,6 +214,9 @@ in lib.concatStrings [
         )
         crossblock)))
       ''
+        # allow icmp6, because it unbreaks the internet
+        ip6tables -A FORWARD -p icmpv6 -j ACCEPT
+
         # allow from trusted interfaces
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.admin-wifi.name} -o ${externalInterface} -j ACCEPT
         ip46tables -A FORWARD -m state --state NEW -i ${vlans.nougat-wifi.name} -o ${externalInterface} -j ACCEPT
@@ -377,7 +380,7 @@ in lib.concatStrings [
   };
 
   services.radvd = {
-    enable = false; # ipv6 is just ... broken, man.
+    enable = true; # ipv6 is just ... awesome and the future, man.
     config = ''
       interface ${vlans.nougat.name}
       {
@@ -394,6 +397,13 @@ in lib.concatStrings [
          {
          };
       };
+      interface ${vlans.target.name}
+      {
+         AdvSendAdvert on;
+         prefix ::/64
+         {
+         };
+      };
     '';
   };
 
@@ -401,7 +411,7 @@ in lib.concatStrings [
     xidhwaddr
     debug
     interface enp1s0
-      ia_pd 1/::/56 enp2s0/2 nougatwifi/3
+      ia_pd 1/::/56 enp2s0/2 nougatwifi/3 target/4
       ia_na 2
   '';
 
