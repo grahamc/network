@@ -17,6 +17,7 @@
     ./irc.nix
     ./gsc.io.nix
     (import ./bgp.nix { inherit secrets; })
+    ./weather.nix
   ];
 
   options.security.acme.certs = lib.mkOption {
@@ -40,6 +41,8 @@
 
     services.phpfpm.pools.main = {
       listen = "/run/php-fpm.sock";
+      user = "nginx";
+      group = "nginx";
       extraConfig = ''
         listen.owner = nginx
         listen.group = nginx
@@ -61,10 +64,11 @@
       pure = true;
       zetup.npool = {
         enable = true;
-        plan = "1d=>1h,1m=>1d,1y=>1m";
+        plan = "15min=>5min,4hour=>15min,2day=>1hour,4day=>1day,3week=>1week";
         recursive = true;
         timestampFormat = "%Y-%m-%d--%H%M%SZ";
         destinations.ogden = {
+          plan = "1hour=>5min,4day=>1hour,1week=>1day,1year=>1week,10year=>1month";
           host = "ogden";
           dataset = "mass/${config.networking.hostName}";
         };

@@ -1,6 +1,6 @@
 { lib, ... }:
 {
-  hardware.enableAllFirmware = true;
+  #hardware.enableAllFirmware = true;
   boot.initrd.availableKernelModules = [ "ahci" "ohci_pci" "ehci_pci" "pata_atiixp" "xhci_pci" "pata_jmicron" "usb_storage" "usbhid" "sd_mod" ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];

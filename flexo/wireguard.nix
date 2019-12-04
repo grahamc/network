@@ -12,6 +12,16 @@ in {
   programs.ssh.knownHosts.ogden.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHICIvUL8AAPDjwP0wUdYADwWSWBieS8iTgNPVa+fynN";
 
   networking.firewall.allowedUDPPorts = [ 51820 ];
+
+  boot.kernel.sysctl."net.ipv4.ip_forward" = "1";
+  networking.nat = {
+    enable = true;
+    externalIP = "147.75.105.137";
+    externalInterface = "bond0";
+    internalIPs = [ "10.10.2.0/24" ];
+    internalInterfaces = [ "wg0" ];
+  };
+
   networking.wireguard.interfaces.wg0 = {
     ips = [ "10.10.2.25/24" ];
     privateKeyFile = "/etc/wireguard/private";
@@ -70,10 +80,5 @@ in {
         chmod 0444 "${publickey}"
       fi
     '';
-  };
-  systemd.paths."wireguard-wg0" = {
-    pathConfig = {
-      PathExists = privatekey;
-    };
   };
 }

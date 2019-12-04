@@ -21,8 +21,6 @@
   boot.kernelParams =  [ "console=ttyS1,115200n8" ];
   boot.extraModulePackages = [ ];
 
-  hardware.enableAllFirmware = true;
-
   networking.hostName = "flexo.gsc.io";
   networking.domain = "gsc.io";
   networking.dhcpcd.enable = false;

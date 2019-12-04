@@ -8,7 +8,7 @@
       enableACME = true;
       forceSSL = true;
       locations = {
-        "/open_search.xml".alias = "${./hound/open-search.xml}";
+        "=/open_search.xml".alias = "${./hound/open-search.xml}";
         "/".proxyPass = "http://127.0.0.1:6080/";
       };
     };

@@ -29,36 +29,12 @@ in {
         endpoint = "flexo.gsc.io:51820";
         persistentKeepalive = 25;
       }
+      {
+        # elzar
+        publicKey = "/5HDPKbtNvC/KxqBrUCnPfLVme8scxLJn9Zs2quXLl0=";
+        allowedIPs = ["10.10.2.50/32" ];
+        persistentKeepalive = 25;
+      }
     ];
-  };
-
-  systemd.services.wireguard-wg0-key = {
-    enable = true;
-    wantedBy = [ "wireguard-wg0.service" ];
-    path = with pkgs; [ wireguard ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-
-    script = ''
-      mkdir --mode 0644 -p "${dirOf privatekey}"
-      if [ ! -f "${privatekey}" ]; then
-        touch "${privatekey}"
-        chmod 0600 "${privatekey}"
-        wg genkey > "${privatekey}"
-        chmod 0400 "${privatekey}"
-
-        touch "${publickey}"
-        chmod 0600 "${publickey}"
-        wg pubkey < "${privatekey}" > "${publickey}"
-        chmod 0444 "${publickey}"
-      fi
-    '';
-  };
-  systemd.paths."wireguard-wg0" = {
-    pathConfig = {
-      PathExists = privatekey;
-    };
   };
 }

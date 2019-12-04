@@ -25,5 +25,5 @@ in stdenv.mkDerivation rec {
   NIXOS_EXTRA_MODULE_PATH = "${src}/modules/default.nix";
   NIXOPS_DEPLOYMENT = "personal";
   HISTFILE = "${src}/.bash_hist";
-  NIX_PATH="nixpkgs=https://nixos.org/channels/nixos-19.03/nixexprs.tar.xz";
+  NIX_PATH="nixpkgs=https://nixos.org/channels/nixos-19.09/nixexprs.tar.xz";
 }

@@ -228,7 +228,10 @@ in lib.concatStrings [
         ip6tables -A FORWARD -i ${externalInterface} -j DROP
       ''
   ];
-  networking.firewall.allowedTCPPorts = [ 32400 ]; # Plex
+  networking.firewall.allowedTCPPorts = [
+    32400 # plex
+    2200 # turner's SSH port
+  ];
   networking.firewall.allowedUDPPorts = [ 41741 ]; # Wireguard on ogden
   networking.firewall.allowPing = true;
   networking.interfaces."${vlans.nougat.name}" = {
@@ -369,6 +372,7 @@ in lib.concatStrings [
       { destination = "10.5.3.105:32400"; proto = "tcp"; sourcePort = 32400; }
       { destination = "10.5.3.105:22"; proto = "tcp"; sourcePort = 22; }
       { destination = "10.5.3.105:41741"; proto = "udp"; sourcePort = 41741; }
+      { destination = "10.5.4.50:22"; proto = "tcp"; sourcePort = 2200; } # turner
     ];
   };
 
@@ -450,6 +454,13 @@ in lib.concatStrings [
         option routers ${vlans.nougat-wifi.firstoctets}.1;
         option domain-name-servers ${vlans.nougat-wifi.firstoctets}.1;
         range ${vlans.nougat-wifi.firstoctets}.100 ${vlans.nougat-wifi.firstoctets}.200;
+
+        group {
+          host turner  { # garage door opener lol
+            hardware ethernet b8:27:eb:9b:4a:23;
+            fixed-address 10.5.4.50;
+          }
+        }
       }
 
       subnet ${vlans.ofborg.firstoctets}.0 netmask 255.255.255.0 {
@@ -514,4 +525,13 @@ in lib.concatStrings [
   };
 
   services.avahi.enable = true;
+
+  systemd.services.forward-hairpin-2200-to-turner-22 = {
+    wantedBy = [ "multi-user.target" ];
+    script = ''
+      set -euxo pipefail
+      exec ${pkgs.socat}/bin/socat TCP-LISTEN:2200,fork TCP:10.5.4.50:22
+    '';
+  };
+
 }

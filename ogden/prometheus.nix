@@ -27,12 +27,11 @@ let
       };
     });
 in {
+  imports = [ ../../prometheus-packet-spot-market-price-exporter/module.nix ];
   networking.extraHosts = ''
+    10.10.2.50 elzar
     12.0.0.1 ogden
-    147.75.198.47 packet-epyc-1
-    147.75.98.145 packet-t2-4
-    147.75.65.54  packet-t2a-1
-    147.75.79.198 packet-t2a-2
+    10.5.4.50 turner
     '' + (let
         nums = lib.lists.range 1 9;
         name = num: ''
@@ -49,6 +48,10 @@ in {
 
   services.prometheus = {
     enable = true;
+    extraFlags = [
+      #"--storage.local.retention=${toString (120 * 24)}h"
+      "--storage.tsdb.retention.time=120d"
+    ];
     globalConfig = {
       scrape_interval = "30s";
     };
@@ -63,21 +66,49 @@ in {
       {
         job_name = "surfboard";
         static_configs = [
-          { targets = [ "lord-nibbler-unencrypted:9239" ]; }
+          { targets = [ "10.5.3.1:9239" ]; }
         ];
       }
 
       {
         job_name = "unifi";
         static_configs = [
-          { targets = [ "lord-nibbler-unencrypted:9130" ]; }
+          { targets = [ "10.5.3.1:9130" ]; }
         ];
       }
 
       {
         job_name = "hue";
         static_configs = [
-          { targets = [ "ogden-unencrypted:9366" ]; }
+          { targets = [ "ogden-encrypted:9366" ]; }
+        ];
+      }
+
+      {
+        job_name = "packet-spot-market-price";
+        static_configs = [
+          { targets = [ "127.0.0.1:9400" ]; }
+        ];
+      }
+
+      {
+        job_name = "weather-berkshires";
+        scheme = "https";
+        metrics_path = "/weather";
+        params = {
+          latitude = [ "42.45" ];
+          longitude = [ "-73.25" ];
+        };
+        static_configs = [
+          { targets = [ "weather.gsc.io" ]; }
+        ];
+      }
+
+      {
+        job_name = "weather-status";
+        scheme = "https";
+        static_configs = [
+          { targets = [ "weather.gsc.io" ]; }
         ];
       }
 
@@ -85,10 +116,9 @@ in {
         job_name = "node";
         static_configs = [
           { targets = [
-              "lord-nibbler-unencrypted:9100"
-              "aarch64.nixos.community:9100"
-              "packet-epyc-1:9100" "packet-t2-4:9100" "packet-t2a-1:9100"
-              "packet-t2a-2:9100"
+            "10.5.3.1:9100"
+            "elzar:9100"
+            "turner:9100"
               ] ++ (builtins.map
               (nodename: "${nodename}-encrypted:9100")
               (pkgs.lib.filter (name: name != "lord-nibbler" && (!(lib.strings.hasPrefix "mac" name)))
@@ -143,6 +173,46 @@ in {
         ${./smartmon.sh} | ${pkgs.moreutils}/bin/sponge smartmon.prom
       '';
 
+  };
+
+  systemd.timers.prometheus-zfs-snapshot-exporter = {
+      description = "Captures snapshot data";
+      wantedBy = [ "timers.target" ];
+      partOf = [ "prometheus-zfs-snapshot-exporter.service" ];
+      enable = true;
+      timerConfig = {
+        OnCalendar = "*:0/3";
+        Unit = "prometheus-zfs-snapshot-exporter.service";
+        Persistent = "yes";
+      };
+  };
+  systemd.services.prometheus-zfs-snapshot-exporter = {
+    path = with pkgs; [ bash gawk gnused moreutils zfs ];
+    serviceConfig = {
+      Type = "oneshot";
+      PrivateTmp =  true;
+      WorkingDirectory = "/tmp";
+    };
+      script = ''
+        mkdir -pm 0775 /var/lib/prometheus-node-exporter-text-files
+        cd /var/lib/prometheus-node-exporter-text-files
+        set -euxo pipefail
+        zfs list -Hp -t snapshot -o name,creation \
+          | sed -e 's#@.*\s# #' \
+          | awk '
+              {
+                if (last[$1] < $2) {
+                  last[$1]=$2
+                }
+              }
+              END {
+                for (m in last) {
+                  printf "zfs_snapshot_age_seconds{dataset=\"%s\"} %s\n", m, last[m];
+                }
+              }
+            ' \
+          | sponge znapzend-snaps.prom
+      '';
   };
 
   systemd.timers.prometheus-hydra-jobs-exporter = {

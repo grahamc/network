@@ -2,7 +2,8 @@
 let
   src = import ./../../ircbot/ofborg {};
   githubgateway = import ./../../../samueldr/github-to-irc/default.nix { inherit pkgs; };
-  pijulnestgateway = pkgs.callPackage ../../../../nest.pijul.com/grahamc/nest-to-irc { };
+  # openssl 1.0 -> 1.1 in 19.03 -> 19.09 busted this service
+  # pijulnestgateway = pkgs.callPackage ../../../../nest.pijul.com/grahamc/nest-to-irc { };
 
   ircservice = name: bin: cfg: {
     "ircbot-${name}" = {
@@ -43,9 +44,9 @@ in {
       (ircservice "github-to-irc"
         "${githubgateway}/bin/github-to-irc"
         "${./../../ircbot/ofborg/config.irc.json}") //
-      (ircservice "pijul-nest-to-irc"
-        "${pijulnestgateway}/bin/nest-to-irc"
-        "${../../../../nest.pijul.com/grahamc/nest-to-irc/url}") //
+      #(ircservice "pijul-nest-to-irc"
+      #  "${pijulnestgateway}/bin/nest-to-irc"
+      #  "${../../../../nest.pijul.com/grahamc/nest-to-irc/url}") //
       {};
 
   };

@@ -11,8 +11,29 @@ in
     (import ./prometheus.nix { inherit secrets; })
     ./sdr.nix
     (import ./dns.nix { inherit secrets; })
+    ../../../NixOS/nixos-org-configurations/macs/host
     # possibly breaking r13y.com # (import ../../../andir/local-nix-cache/module.nix)
   ];
+
+  macosGuest = {
+    enable = true;
+    network = {
+      externalInterface = "enp4s0";
+      sshInterface = "lo";
+      interiorNetworkPrefix = "192.168.1";
+    };
+    guest = {
+      sockets = 1;
+      cores = 2;
+      threads = 2;
+      memoryInMegs = 4 * 1024;
+      zvolName = "rpool/macos-v1";
+      snapshotName = "import";
+      guestConfigDir = ./mac-guest;
+      ovmfCodeFile = ../../../NixOS/nixos-org-configurations/macs/dist/OVMF_CODE.fd;
+      ovmfVarsFile = ../../../NixOS/nixos-org-configurations/macs/dist/OVMF_VARS-1024x768.fd;
+    };
+  };
 
   #local-nix-cache.server = {
   #  enable = true;
@@ -25,7 +46,7 @@ in
   nix = {
       gc = {
         automatic = true;
-        dates = "8:05";
+        dates = "8:06";
 
         options = let
           freedGb = 300;
@@ -170,7 +191,7 @@ in
   # Plex
   services.plex = {
     enable = true;
-    package = pkgs.plex.overrideAttrs (x: let
+/*    package = pkgs.plex.overrideAttrs (x: let
         # see https://www.plex.tv/media-server-downloads/ for 64bit rpm
         version = "1.13.6.5339-115f087d6";
         sha1 = "7f425470387b7d6b4f31c799dc37f967cef2aae2";
@@ -181,7 +202,7 @@ in
           inherit sha1;
         };
       }
-    );
+    );*/
   };
 
   containers = lib.foldr (n: c: c // { "buildkite-builder-grahamc-${toString n}" = {

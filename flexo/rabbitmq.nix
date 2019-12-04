@@ -2,7 +2,7 @@
 { pkgs, config, ... }:
 let
   rabbit_tls_port = 5671;
-  cert_dir = "${config.security.acme.directory}/flexo.gsc.io";
+  cert_dir = "/var/lib/acme/flexo.gsc.io";
 in {
   networking = {
     firewall = {
