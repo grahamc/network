@@ -399,13 +399,10 @@ in lib.concatStrings [
 
   networking.dhcpcd.extraConfig = ''
     xidhwaddr
-    noipv6rs
     debug
     interface enp1s0
-      #ipv6rs
-      iaid 10
-      ia_na 1
-      ia_pd 2/::/56 enp2s0/2 nougatwifi/3
+      ia_pd 1/::/56 enp2s0/2 nougatwifi/3
+      ia_na 2
   '';
 
   services.dhcpd4 = {
