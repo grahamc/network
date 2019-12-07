@@ -288,7 +288,7 @@ in lib.concatStrings [
 
   services.kresd = {
     enable = true;
-    interfaces = [ "::1" "127.0.0.1" "${vlans.nougat.firstoctets}.1" "${vlans.nougat-wifi.firstoctets}.1" ];
+    interfaces = [ "127.0.0.1" "${vlans.nougat.firstoctets}.1" "${vlans.nougat-wifi.firstoctets}.1" "::" ];
     extraConfig = if true then ''
       modules = {
       	'policy',   -- Block queries to local zones/bad sites
@@ -379,29 +379,54 @@ in lib.concatStrings [
     ];
   };
 
+  #services.bird2 = {
+  #  enable = true;
+  #  router id "10.5.4.1";
+  #
+  #  protocol device {
+  #    scan time 10;
+  #  }
+  #  protocol
+  #}
+
   services.radvd = {
     enable = true; # ipv6 is just ... awesome and the future, man.
     config = ''
       interface ${vlans.nougat.name}
       {
          AdvSendAdvert on;
+         RDNSS 2606:4700:4700::1111 {};
          prefix ::/64
          {
+           AdvRouterAddr on;
          };
       };
 
       interface ${vlans.nougat-wifi.name}
       {
          AdvSendAdvert on;
+         RDNSS 2606:4700:4700::1111 {};
          prefix ::/64
          {
+           AdvRouterAddr on;
          };
       };
       interface ${vlans.target.name}
       {
          AdvSendAdvert on;
+         RDNSS 2606:4700:4700::1111 {};
          prefix ::/64
          {
+           AdvRouterAddr on;
+         };
+      };
+      interface ${vlans.ofborg.name}
+      {
+         AdvSendAdvert on;
+         RDNSS 2606:4700:4700::1111 {};
+         prefix ::/64
+         {
+           AdvRouterAddr on;
          };
       };
     '';
@@ -411,7 +436,7 @@ in lib.concatStrings [
     xidhwaddr
     debug
     interface enp1s0
-      ia_pd 1/::/56 enp2s0/2 nougatwifi/3 target/4
+      ia_pd 1/::/56 enp2s0/2 nougatwifi/3 target/4 ${vlans.ofborg.name}/5
       ia_na 2
   '';
 
