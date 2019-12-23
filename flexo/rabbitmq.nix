@@ -31,7 +31,7 @@ in {
     extraDomains = {
       "events.nix.gsc.io" = null;
     };
-    plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" ];
+    plugins = [ "cert.pem" "fullchain.pem" "full.pem" "key.pem" "account_key.json" "account_reg.json" ];
     group = "rabbitmq";
     allowKeysForGroup = true;
   };
