@@ -145,13 +145,13 @@ let
     sleep 1
 
     echo "Generating intermediate certificate"
-    vault secrets tune -max-lease-ttl=720h pki_intermediate
+    vault secrets tune -max-lease-ttl=718h pki_intermediate
     vault write -format=json pki_intermediate/intermediate/generate/internal \
         common_name="localhost Intermediate Authority" \
         | jq -r '.data.csr' > "$scratch/pki_intermediate.csr"
 
     vault write -format=json pki_ca/root/sign-intermediate csr=@"$scratch/pki_intermediate.csr" \
-        format=pem_bundle ttl="3h" \
+        format=pem_bundle ttl="717h" \
         | jq -r '.data.certificate' > "$scratch/intermediate.cert.pem"
     vault write pki_intermediate/intermediate/set-signed certificate=@"$scratch/intermediate.cert.pem"
     sleep 1
@@ -160,10 +160,10 @@ let
     vault write pki_intermediate/roles/localhost \
         allowed_domains="localhost" \
         allow_subdomains=false \
-        max_ttl="718h"
+        max_ttl="716h"
 
     vault write -format json pki_intermediate/issue/localhost \
-      common_name="localhost" ttl="717h" > "$scratch/short.pem"
+      common_name="localhost" ttl="715h" > "$scratch/short.pem"
 
     jq -r '.data.certificate' < "$scratch/short.pem" > "$scratch/certificate.server.pem"
     jq -r '.data.ca_chain[]' < "$scratch/short.pem" >> "$scratch/certificate.server.pem"
