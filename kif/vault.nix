@@ -220,6 +220,10 @@ in {
       VAULT_ADDR = address;
       VAULT_CACERT = "/run/vault/certificate.pem";
     };
+    etc."vault.sh".text = ''
+      export VAULT_ADDR=${address}
+      export VAULT_CACERT=/run/vault/certificate.pem
+    '';
   };
 
   services.vault = {
