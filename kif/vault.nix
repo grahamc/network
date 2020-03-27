@@ -126,7 +126,7 @@ let
     fi
 
     if [ -f /run/keys/vault-login ]; then
-      vault login - < /run/keys/vault-login
+      vault login - < /run/keys/vault-login > /dev/null
     fi
 
     rm /run/keys/vault*
