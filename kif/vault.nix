@@ -54,6 +54,11 @@ let
       type = "secrets";
       plugin = "pki";
     };
+    "secret/" = {
+      type = "secrets";
+      plugin = "kv";
+    };
+
     #"packet/" = {
     #  type = "secrets";
     #  plugin = "packet";
