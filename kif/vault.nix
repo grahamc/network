@@ -43,15 +43,19 @@ let
   };
   mounts = {
     "pki_ca/" = {
+      type = "secrets";
       plugin = "pki";
     };
     "pki_intermediate/" = {
+      type = "secrets";
       plugin = "pki";
     };
     #"packet/" = {
+    #  type = "secrets";
     #  plugin = "packet";
     #};
     #"oauth2/github/" = {
+    #  type = "secrets";
     #  plugin = "oauthapp";
     #};
   };
@@ -122,8 +126,8 @@ let
 
     ${builtins.concatStringsSep "\n" (lib.attrsets.mapAttrsToList (path: info:
       ''
-        if ! vault secrets list -format json | jq -e '."${path}"?'; then
-          vault secrets enable -path=${path} ${info.plugin}
+        if ! vault ${info.type} list -format json | jq -e '."${path}"?'; then
+          vault ${info.type} enable -path=${path} ${info.plugin}
         fi
       ''
     ) mounts)}
