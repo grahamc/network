@@ -63,6 +63,18 @@ let
     #  plugin = "oauthapp";
     #};
   };
+
+  policies = {
+    "buildkite-nixops" = {
+      document = ''
+        # Read-only permission on 'secret/data/mysql/*' path
+        path "secret/data/mysql/*" {
+          capabilities = [ "read" ]
+        }
+      '';
+    };
+  };
+
   pluginsBin = pkgs.runCommand "vault-env" {}
   ''
     mkdir -p $out/bin
@@ -135,6 +147,12 @@ let
         fi
       ''
     ) mounts)}
+
+    ${builtins.concatStringsSep "\n" (lib.attrsets.mapAttrsToList (name: policy:
+      ''
+        echo ${lib.escapeShellArg policy.document} | vault policy write ${name} -
+      ''
+    ) policies)}
 
     # Replace our selfsigned cert  with a vault-made key.
     # 720h: the laptop can only run for 30 days without a reboot.
