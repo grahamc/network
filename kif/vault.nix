@@ -42,6 +42,10 @@ let
     #};
   };
   mounts = {
+    "approle/" = {
+      type = "auth";
+      plugin = "approle";
+    };
     "pki_ca/" = {
       type = "secrets";
       plugin = "pki";
