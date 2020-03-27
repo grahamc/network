@@ -87,6 +87,13 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOyyr/4fMKQ1fwa5DjFVIHQLchr4EKcOWEI++gYBTbWF root@haumea"
         ];
       };
+      flexoexport = {
+        isNormalUser = true; # not really, but need to be able to execute commands
+        uid = 1005;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsBEaKyvlXvVGjMT7LEhYs87kVNiTpeVtWNtjnElSSg"
+        ];
+      };
     };
   };
 
