@@ -1,6 +1,15 @@
+/*
+
+Bootstrap steps:
+
+0. vault operator init -recovery-shares=1 -key-shares=1 -recovery-threshold=1 -key-threshold=1
+1. vault write aws-personal/config/root access_key=... secret_key=... region=us-east-1
+2. vault write -force aws-personal/config/rotate-root
+3. vault kv put packet/config api_token=-
+*/
+
 { secrets }:
 { lib, pkgs, config, ... }:
-# vault operator init -recovery-shares=1 -key-shares=1 -recovery-threshold=1 -key-threshold=1
 let
   address = (if config.services.vault.tlsKeyFile == null
     then "http://"
@@ -10,24 +19,25 @@ let
     then ""
     else "-ca-cert=/run/vault/certificate.pem");
 
+  pluginPkgs = pkgs.callPackage ./plugins.nix {};
 
-  # note: would like to buildEnv but vault rejects symlinks :/
   plugins = {
     pki = {
       type = "secret";
-
-      # vault kv put packet/config api_token=-
-      # vault kv put packet/role/nixos-foundation type=project ttl=30 max_ttl=3600 project_id=86d5d066-b891-4608-af55-a481aa2c0094 read_only=false
     };
 
-    #packet = {
-    #  type = "secret";
-    #  package = pkgs.vault-plugin-secrets-packet;
-    #  command = "vault-plugin-secrets-packet";
+    aws = {
+      type = "secret";
+    };
+
+    packet = {
+      type = "secret";
+      package = pluginPkgs.vault-plugin-secrets-packet;
+      command = "vault-plugin-secrets-packet";
 
       # vault kv put packet/config api_token=-
-      # vault kv put packet/role/nixos-foundation type=project ttl=30 max_ttl=3600 project_id=86d5d066-b891-4608-af55-a481aa2c0094 read_only=false
-    #};
+      # vault kv put packet/role/nixos-foundation type=project ttl=3600 max_ttl=3600 project_id=86d5d066-b891-4608-af55-a481aa2c0094 read_only=false
+    };
     #oauthapp = {
       # wl-paste | vault write oauth2/github/config -provider=github client_id=theclientid client_secret=- provider=github
 
@@ -46,6 +56,10 @@ let
       type = "auth";
       plugin = "approle";
     };
+    "aws-personal/" = {
+      type = "secrets";
+      plugin = "aws";
+    };
     "pki_ca/" = {
       type = "secrets";
       plugin = "pki";
@@ -59,21 +73,85 @@ let
       plugin = "kv";
     };
 
-    #"packet/" = {
-    #  type = "secrets";
-    #  plugin = "packet";
-    #};
+    "packet/" = {
+      type = "secrets";
+      plugin = "packet";
+    };
     #"oauth2/github/" = {
     #  type = "secrets";
     #  plugin = "oauthapp";
     #};
   };
 
+  writes = [
+    {
+      path = "auth/approle/role/buildkite-nixops";
+      args = {
+        token_policies = "buildkite-nixops";
+        token_ttl = "720h";
+        token_max_ttl = "720h";
+      };
+    }
+    {
+      path = "packet/role/nixos-foundation";
+      args = {
+        type = "project";
+        ttl = "3600";
+        max_ttl = "3600";
+        project_id = "86d5d066-b891-4608-af55-a481aa2c0094";
+        read_only = "false";
+      };
+    }
+    {
+      path = "aws-personal/roles/nixops-deploy";
+      args = {
+        credential_type = "iam_user";
+        policy_document = builtins.toJSON {
+          Version = "2012-10-17";
+          Statement = [
+            {
+              Effect = "Allow";
+              Action = "s3:ListBucket";
+              Resource = "arn:aws:s3:::mybucket";
+            }
+            {
+              Effect = "Allow";
+              Action = [ "s3:GetObject" "s3:PutObject" ];
+              Resource = "arn:aws:s3:::grahamc-nixops-state/*.nixops";
+            }
+            {
+              Effect = "Allow";
+              Action = [
+                "dynamodb:GetItem"
+                "dynamodb:PutItem"
+                "dynamodb:DeleteItem"
+              ];
+              Resource = "arn:aws:dynamodb:*:*:table/grahamc-nixops-lock";
+            }
+          ];
+        };
+      };
+    }
+  ];
+
+
+
   policies = {
     "buildkite-nixops" = {
       document = ''
-        # Read-only permission on 'secret/data/mysql/*' path
-        path "secret/data/mysql/*" {
+        path "auth/token/create" {
+          capabilities = [ "create", "update" ]
+        }
+
+        path "auth/token/revoke-self" {
+          capabilities = [ "update" ]
+        }
+
+        path "packet/creds/nixos-foundation" {
+          capabilities = [ "read" ]
+        }
+
+        path "aws-personal/creds/nixops-deploy" {
           capabilities = [ "read" ]
         }
       '';
@@ -158,6 +236,17 @@ let
         echo ${lib.escapeShellArg policy.document} | vault policy write ${name} -
       ''
     ) policies)}
+
+    ${builtins.concatStringsSep "\n" (builtins.map ({ path, args }: ''
+      vault write ${lib.escapeShellArg path} \
+      ${builtins.concatStringsSep " \\\n" (lib.attrsets.mapAttrsToList (name: value:
+        "  ${lib.escapeShellArg name}=${lib.escapeShellArg value}"
+      ) args)}
+      ''
+    ) writes)}
+
+    #vault write auth/approle/role/buildkite-nixops token_policies="buildkite-nixops" \
+    #    token_ttl=720h token_max_ttl=720h
 
     # Replace our selfsigned cert  with a vault-made key.
     # 720h: the laptop can only run for 30 days without a reboot.
