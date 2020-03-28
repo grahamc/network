@@ -329,8 +329,20 @@ in {
     tlsKeyFile = "/run/vault/vault.key";
   };
 
+  systemd.services.vault = {
+    wantedBy = [ "vault.target" ];
+    restartIfChanged = lib.mkForce true;
+    postStart = ''
+      set -x
+      . /etc/vault.sh
+      while ${pkgs.vault}/bin/vault status; [ $? -eq 1 ]; do
+        sleep 1
+      done
+    '';
+  };
+
   systemd.services.vault-tls-bootstrap = {
-    wantedBy = [ "vault.service" ];
+    wantedBy = [ "vault.service" "vault.target" ];
     path = with pkgs; [ openssl ];
     unitConfig.Before = [ "vault.service" ];
     serviceConfig = {
@@ -339,7 +351,7 @@ in {
     };
 
     script = ''
-
+      set -eux
       rm -rf /run/vault
       mkdir /run/vault
 
@@ -356,20 +368,25 @@ in {
       cp  /run/vault/certificate.pem  /run/vault/certificate.server.pem
 
       chown ${config.systemd.services.vault.serviceConfig.User}:${config.systemd.services.vault.serviceConfig.Group} /run/vault/{vault.key,certificate.pem}
-      ${pkgs.procps}/bin/pkill --signal HUP vault
+      ${pkgs.procps}/bin/pkill --signal HUP vault || true
+      sleep 1
+      ${pkgs.procps}/bin/pkill --signal HUP vault || true
     '';
   };
   systemd.services.vault-unlock = {
-    wantedBy = [ "vault.service" "multi-user.target" ];
+    wantedBy = [ "vault.service" "vault.target" "multi-user.target" ];
     wants = [ "vault-unseal-json-key.service" "vault-login-key.service" ];
-    unitConfig.After = [ "vault.service" "vault-unseal-json-key.service" "vault-login-key.service" ];
+    unitConfig.After = [ "vault-tls-bootstrap.service" "vault.service" "vault-unseal-json-key.service" "vault-login-key.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
 
     script = ''
+      . /etc/vault.sh
       ${vault-setup}/bin/vault-setup
     '';
   };
+
+  systemd.targets.vault = {};
 }

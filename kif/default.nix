@@ -5,6 +5,7 @@
     ./hardware.nix
     ../modules/wireguard.nix
     (import ./vault.nix { inherit secrets; })
+    ./buildkite.nix
     #(import ./prometheus.nix { inherit secrets; })
     #./sdr.nix
     #(import ./dns.nix { inherit secrets; })
