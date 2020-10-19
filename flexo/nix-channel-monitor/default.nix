@@ -43,9 +43,11 @@
 
       preStart = ''
         set -eux
+        remote=https://github.com/nixos/nixpkgs.git
         if [ ! -d /var/lib/nix-channel-monitor/git ]; then
-          git clone https://github.com/nixos/nixpkgs-channels.git git
+          git clone "$remote" git
         fi
+        git -C /var/lib/nix-channel-monitor/git remote set-url origin "$remote"
       '';
 
       script = let

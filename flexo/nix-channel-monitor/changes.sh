@@ -110,7 +110,7 @@ readonly dest="$2"
     cd "$gitrepo" >&2
     git fetch "$remote"  >&2
     git for-each-ref --format '%(refname:strip=3)' \
-        "refs/remotes/$remote"
+        "refs/remotes/$remote/nixos-*" "refs/remotes/$remote/nixpkgs-*"
 ) | grep -v HEAD |
     (
         cd "$dest"
